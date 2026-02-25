@@ -10,7 +10,7 @@ const newUserSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      required: true,
+      required: false,
       label: "email",
     },
     password: {
@@ -22,8 +22,12 @@ const newUserSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    role:{
+      type: String,
+      default: "user"
+    }
   },
-  { collection: "users" }
+  { collection: "users"}
 );
 
 module.exports = mongoose.model('users', newUserSchema)
