@@ -1,0 +1,3 @@
+# Base URL
+@baseUrl = http://localhost:8081/coolmoviegamez/leaderboard
+get{{baseUrl}}/

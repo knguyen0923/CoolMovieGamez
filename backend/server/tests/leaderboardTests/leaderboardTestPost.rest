@@ -1,0 +1,9 @@
+# Base URL
+@baseUrl = http://localhost:8081/coolmoviegamez/leaderboard
+POST {{baseUrl}}/
+Content-Type: application/json
+{
+    "user": "dummyUser",
+    "game": "guessr",
+    "highscore": 100
+}
