@@ -1,0 +1,7 @@
+POST http://localhost:8080/CoolMovieGamez/users/guessr/guesserCreate
+Content-Type: application/json 
+
+{
+    "username" : "tochiamanze",
+    "score" :100
+    }
