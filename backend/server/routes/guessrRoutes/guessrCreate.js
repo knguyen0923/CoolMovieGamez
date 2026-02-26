@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const newUserModel = require('../guessr/users')
+const guessrScore = require('../../models/guessrModel');
 
 router.post('/guesserCreate', async (req, res) => {
 

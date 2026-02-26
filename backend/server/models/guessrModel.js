@@ -18,15 +18,12 @@ const guessrSchema = new mongoose.Schema(
       default: Date.now,
     },
     score: {
-        type: int,
+        type: Number,
         min: 0
-    },
-    highscore: {
-        type: int
-    },
+    }
     
   },
   { collection: "guessrScores" }
 );
 
-module.exports = mongoose.model('guessrScores', newUserSchema)
+module.exports = mongoose.model('guessrScores', guessrSchema)

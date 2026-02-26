@@ -1,4 +1,4 @@
-POST http://localhost:8080/CoolMovieGamez/users/guessr/guesserCreate
+POST http://localhost:8096/CoolMovieGamez/users/:username/guessr/guesserCreate
 Content-Type: application/json 
 
 {
