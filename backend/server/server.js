@@ -17,6 +17,12 @@ const guessrGetRoute = require('./routes/guessrRoutes/guessrGet')
 const hiloCreateRoute = require('./routes/HiloRoutes/HiloCreateRoute')
 const hiloGetRoute = require('./routes/HiloRoutes/HiloGetRoute')
 
+//Leaderboard Routes
+const leaderboardPostRoute = require('./routes/leaderboardRoutes/leaderboardPost')
+const leaderboardGetRoute = require('./routes/leaderboardRoutes/leaderboardGet')
+const leaderboardPutRoute = require('./routes/leaderboardRoutes/leaderboardPut')
+const leaderboardDeleteRoute = require('./routes/leaderboardRoutes/leaderboardDelete')
+
 //UserProfile Route
 const userProfileRoute = require("./routes/userProfileRoute/userProfile")
 
@@ -40,6 +46,12 @@ app.use('/guessr', guessrGetRoute)
 //HiLo routes
 app.use('/coolmoviegamez/hilo', hiloCreateRoute)
 app.use('/coolmoviegamez/hilo', hiloGetRoute)
+
+//Leaderboard routes
+app.use('/leaderboard', leaderboardPostRoute)
+app.use('/leaderboard', leaderboardGetRoute)
+app.use('/leaderboard', leaderboardPutRoute)
+app.use('/leaderboard', leaderboardDeleteRoute)
 
 //UserProfile routes
 app.use("/api/UserProfile", require("./routes/userProfileRoute/userProfile"));
