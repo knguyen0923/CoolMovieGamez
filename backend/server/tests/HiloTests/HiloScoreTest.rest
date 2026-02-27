@@ -1,6 +1,7 @@
 ### add a HiLo score for a user
-POST http://localhost:8081/coolmoviegamez/hilo/Nolen
+POST http://localhost:8081/coolmoviegamez/hilo/johndoe
 Content-Type: application/json
+
 {
   "gamemode": "HiLo",
   "score": 7
@@ -9,7 +10,7 @@ Content-Type: application/json
 ###
 
 ### Add another HiLo score for the same user
-POST http://localhost:8081/coolmoviegamez/hilo/Nolen
+POST http://localhost:8081/coolmoviegamez/hilo/johndoe
 Content-Type: application/json
 
 {
@@ -20,7 +21,7 @@ Content-Type: application/json
 ###
 
 ### Add a HiLo score for a different user
-POST http://localhost:8081/coolmoviegamez/hilo/Tochi
+POST http://localhost:8081/coolmoviegamez/hilo/tochi
 Content-Type: application/json
 
 {
@@ -32,4 +33,3 @@ Content-Type: application/json
 
 ### Get ALL HiLo scores
 GET http://localhost:8081/coolmoviegamez/hilo/
-Content-Type: application/json

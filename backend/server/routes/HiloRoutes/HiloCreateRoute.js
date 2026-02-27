@@ -1,39 +1,44 @@
-//Loading express
+//import express, make router, and import Hilo Score moodel
 const express = require("express");
 const router = express.Router();
-
-//importing HiLo Score model
 const HiloScoreModel = require("../../models/HiloScoreModel");
 
-// post route to create a new HiLo score
-router.post("/create", async (req, res) => {
-  
-  // try to prevent server crash if something fails
-    try {
+// making the post route
+router.post("/:username", async (req, res) => {
 
-        //reading data from request body
-    const { username, score } = req.body;
+  // reading username from URL param
+  const username = req.params.username;
 
-    //creating new HiLo score document using the model and data from request body
-        const newScore = new HiloScoreModel({
-            username: username,
-            score: score,
-            date:new Date(),
+  // reading data from request body
+  const gamemode = req.body.gamemode;
+  const score = Number(req.body.score);
 
-        });
+  try {
 
-    //saving to mongodb
-    const savedScore = await newScore.save();
+    // making sure score is a number
+    if (Number.isNaN(score)) {
+      return res.status(400).json({ message: "Score must be a number" });
+    }
 
-    //returning saved record to client
-    return res.json(savedScore);
+    // creating new HiLo score document
+    const newScore = new HiloScoreModel({
+      username: username,
+      gamemode: gamemode,
+      score: score,
+      date: new Date(),
+    });
 
+    // saving to mongodb
+    await newScore.save();
 
-    //handling error, returning JSON response and error code
+    // returning success message
+    return res.status(201).json({ message: "HiLo score saved successfully" });
+
   } catch (error) {
-    return res.status(500).json({ error: "Failed to create HiLo score" });
+    console.error("Error saving HiLo score:", error);
+    return res.status(500).json({ message: "Failed to save HiLo score" });
   }
 });
 
-//export router
+//returning them as JSON
 module.exports = router;

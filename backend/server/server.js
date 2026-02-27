@@ -13,6 +13,11 @@ const deleteUser = require('./routes/userRoutes/userDeleteAll')
 const guessrCreateRoute = require('./routes/guessrRoutes/guessrCreate')
 const guessrGetRoute = require('./routes/guessrRoutes/guessrGet')
 
+//HiLo Routes
+const hiloCreateRoute = require('./routes/HiloRoutes/HiloCreateRoute')
+const hiloGetRoute = require('./routes/HiloRoutes/HiloGetRoute')
+
+
 require('dotenv').config();
 const SERVER_PORT = 8081
 
@@ -29,6 +34,11 @@ app.use('/user', deleteUser)
 //Guessr routes
 app.use('/guessr', guessrCreateRoute)
 app.use('/guessr', guessrGetRoute)
+
+//HiLo routes
+app.use('/coolmoviegamez/hilo', hiloCreateRoute)
+app.use('/coolmoviegamez/hilo', hiloGetRoute)
+
 
 app.listen(SERVER_PORT, (req, res) => {
     console.log(`The backend service is running on port ${SERVER_PORT} and waiting for requests.`);
