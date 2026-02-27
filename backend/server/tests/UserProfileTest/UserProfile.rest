@@ -1,0 +1,15 @@
+
+### Get UserProfile
+GET http://localhost:8081/api/UserProfile/testuser
+
+###
+
+### Update UserProfile
+PUT http://localhost:8081/api/UserProfile/testuser
+Content-Type: application/json
+
+{
+  "bio": "This is my profile",
+  "avatarUrl": "https://site.com/avatar.png",
+  "coins": 100
+}

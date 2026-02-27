@@ -17,6 +17,8 @@ const guessrGetRoute = require('./routes/guessrRoutes/guessrGet')
 const hiloCreateRoute = require('./routes/HiloRoutes/HiloCreateRoute')
 const hiloGetRoute = require('./routes/HiloRoutes/HiloGetRoute')
 
+//UserProfile Route
+const userProfileRoute = require("./routes/userProfileRoute/userProfile")
 
 require('dotenv').config();
 const SERVER_PORT = 8081
@@ -39,6 +41,8 @@ app.use('/guessr', guessrGetRoute)
 app.use('/coolmoviegamez/hilo', hiloCreateRoute)
 app.use('/coolmoviegamez/hilo', hiloGetRoute)
 
+//UserProfile routes
+app.use("/api/UserProfile", require("./routes/userProfileRoute/userProfile"));
 
 app.listen(SERVER_PORT, (req, res) => {
     console.log(`The backend service is running on port ${SERVER_PORT} and waiting for requests.`);
