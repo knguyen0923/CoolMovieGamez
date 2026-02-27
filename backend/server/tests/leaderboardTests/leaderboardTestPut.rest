@@ -1,18 +1,18 @@
-// Update the highscore of the user "dummyUser" on guessr leaderboard
-PUT http://localhost:8081/leaderboard/guessr/
+// PUT higher score for HiLo leaderboard
+PUT http://localhost:8081/leaderboard/HiLo
 Content-Type: application/json
+
 {
-    "game": "guessr",
-    "username": "dummyUser",
-    "score": 150
+  "username": "Alice",
+  "score": 25
 }
 
 ###
-
-PUT http://localhost:8081/leaderboard/hilo/
+// PUT higher score for Guessr leaderboard
+PUT http://localhost:8081/leaderboard/Guessr
 Content-Type: application/json
+
 {
-    "game": "hilo",
-    "username": "dummyUser",
-    "score": 150
+  "username": "Alice",
+  "score": 25
 }

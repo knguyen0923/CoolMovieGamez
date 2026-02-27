@@ -1,4 +1,2 @@
-// Delete geussr leaderboard and hilo leaderboard
-DELETE  http://localhost:8081/leaderboard/guessr/
-### 
-DELETE http://localhost:8081/leaderboard/hilo/
+### Clear all leaderboards
+DELETE http://localhost:8081/leaderboard

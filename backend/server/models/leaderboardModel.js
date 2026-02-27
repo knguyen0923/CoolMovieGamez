@@ -1,27 +1,28 @@
 const mongoose = require("mongoose");
 
-//leaderboard schema/model
-
-const newUserSchema = new mongoose.Schema(
+const leaderboardSchema = new mongoose.Schema(
   {
-    game: {
+    game: { 
       type: String,
-      required: true,
+      required: true, 
+      trim: true
     },
-    user: {
-      type: String,
-      required: true,
-    },
-    highscore: {
-      type: Number,
-      default: 0,
-    },
-    updatedAt: {
+    username: { 
+      type: String, 
+      required: true, 
+      trim: true },
+    score: { 
+      type: Number, 
+      required: true, 
+      min: 0 },
+    updatedAt: { 
       type: Date,
-      default: Date.now,
-    },
+      default: Date.now },
   },
-  { collection: "Leaderboards" },
+  { collection: "Leaderboards" }
 );
 
-module.exports = mongoose.model("Leaderboard", newUserSchema);
+// Only one possible highscore per user per game
+leaderboardSchema.index({ game: 1, username: 1 }, { unique: true });
+
+module.exports = mongoose.model("Leaderboard", leaderboardSchema);

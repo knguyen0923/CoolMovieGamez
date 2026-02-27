@@ -1,18 +1,18 @@
-// Post a new user on geussr leaderboard and hilo leaderboard
-@baseUrl = http://localhost:8081/leaderboard/
-POST http://localhost:8081/leaderboard/guessr
+// Test for HiLo leaderboard POST 
+POST http://localhost:8081/leaderboard/HiLo
 Content-Type: application/json
+
 {
-    "game": "guessr",
-    "username": "dummyUser",
-    "score": 100
+  "username": "Alice",
+  "score": 5
 }
 
 ###
-POST http://localhost:8081/leaderboard/hilo
+// Test for Guessr leaderboard POST
+POST http://localhost:8081/leaderboard/Guessr
 Content-Type: application/json
+
 {
-    "game": "hilo",
-    "username": "dummyUser",
-    "score": 100
-} 
+  "username": "Alice",
+  "score": 5
+}
