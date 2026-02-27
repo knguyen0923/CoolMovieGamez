@@ -1,11 +1,37 @@
 const mongoose = require("mongoose");
 
-const userProfileSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true }, // link to existing users
-  bio: { type: String, default: "" },
-  avatarUrl: { type: String, default: "" },
-  coins: { type: Number, default: 0 },
-  updatedAt: { type: Date, default: Date.now }
+// Schema to store extra profile info for each user
+
+const profileDataSchema = new mongoose.Schema({
+
+  username: {
+    type: String,
+    required: true,
+    unique: true      // connects profile to a user account
+  },
+
+  bio: {
+    type: String,
+    default: ""
+  },
+
+  avatarUrl: {
+    type: String,
+    default: ""
+  },
+
+  coins: {
+    type: Number,
+    default: 0
+  },
+
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  }
+
 });
 
-module.exports = mongoose.model("UserProfile", userProfileSchema);
+// Export the model so routes can use it
+
+module.exports = mongoose.model("UserProfile", profileDataSchema);

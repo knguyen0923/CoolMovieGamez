@@ -1,58 +1,109 @@
-// routes/userProfileRoute/userProfile.js
+// routes/userProfileRoute.js
+
 const express = require("express");
+
 const router = express.Router();
 
-const User = require("../../models/userModel");
-const UserProfile = require("../../models/userProfile");
+const User = require("../models/userModel");
+const UserProfile = require("../models/UserProfile");
 
-// GET UserProfile
+// GET user profile info
+
 router.get("/:username", async (req, res) => {
-  const username = req.params.username;
+
+  const name = req.params.username;
 
   try {
-    const user = await User.findOne({ username }).select("-password");
-    if (!user) return res.status(404).json({ message: "User not found" });
 
-    let profile = await UserProfile.findOne({ username });
+    const foundUser = await User
+      .findOne({ username: name })
+      .select("-password");
 
-    // Create profile automatically if it doesn't exist
-    if (!profile) profile = await UserProfile.create({ username });
-
-    return res.json({ user, profile });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-// Update UserProfile
-router.put("/:username", async (req, res) => {
-  const username = req.params.username;
-  const { bio, avatarUrl, coins } = req.body;
-
-  try {
-    let profile = await UserProfile.findOne({ username });
-    if (!profile) profile = await UserProfile.create({ username });
-
-    if (bio !== undefined) profile.bio = bio;
-    if (avatarUrl !== undefined) profile.avatarUrl = avatarUrl;
-
-    if (coins !== undefined) {
-      const numCoins = Number(coins);
-      if (Number.isNaN(numCoins)) {
-        return res.status(400).json({ message: "coins must be a number" });
-      }
-      profile.coins = numCoins;
+    if (!foundUser) {
+      return res.status(404).json({
+        message: "User not found"
+      });
     }
 
-    profile.updatedAt = new Date();
-    await profile.save();
 
-    return res.json({ message: "UserProfile updated", profile });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "Server error" });
+    let userProfile = await UserProfile.findOne({ username: name });
+
+
+    // If no profile exists yet, create one
+    if (!userProfile) {
+      userProfile = await UserProfile.create({ username: name });
+    }
+
+    return res.json({
+      user: foundUser,
+      profile: userProfile
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Server error"
+    });
+
   }
+
+});
+
+// UPDATE user profile
+
+router.put("/:username", async (req, res) => {
+
+  const name = req.params.username;
+
+  const bioText = req.body.bio;
+  const avatarLink = req.body.avatarUrl;
+  const coinAmount = req.body.coins;
+
+  try {
+
+    let userProfile = await UserProfile.findOne({ username: name });
+
+    if (!userProfile) {
+      userProfile = await UserProfile.create({ username: name });
+    }
+
+
+    // Update fields only if values were sent
+
+    if (bioText !== undefined) {
+      userProfile.bio = bioText;
+    }
+
+    if (avatarLink !== undefined) {
+      userProfile.avatarUrl = avatarLink;
+    }
+
+    if (coinAmount !== undefined) {
+      userProfile.coins = Number(coinAmount);
+    }
+
+    userProfile.updatedAt = new Date();
+
+    await userProfile.save();
+
+
+    return res.json({
+      message: "UserProfile updated",
+      profile: userProfile
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Server error"
+    });
+
+  }
+
 });
 
 module.exports = router;
