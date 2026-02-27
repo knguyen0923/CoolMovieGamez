@@ -1,16 +1,17 @@
 const express = require("express");
 const router = express.Router();
+
 const guessrScore = require('../../models/guessrModel');
 
-router.post('/guesserCreate', async (req, res) => {
+router.post('/guessrCreate', async (req, res) => {
 
     const username = req.body.username;
     const score = req.body.score;
 
     try {
-        const newscore = new Score({
-          user:username,
-          value:score
+        const newscore = new guessrScore({
+          username:username,
+          score:score
         });
 
         await newscore.save(); 

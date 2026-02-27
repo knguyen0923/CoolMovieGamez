@@ -27,8 +27,8 @@ app.use('/user', editUser)
 app.use('/user', deleteUser)
 
 //Guessr routes
-app.use('/guessrRoutes', guessrCreateRoute)
-app.use('/guessrRoutes', guessrGetRoute)
+app.use('/guessr', guessrCreateRoute)
+app.use('/guessr', guessrGetRoute)
 
 app.listen(SERVER_PORT, (req, res) => {
     console.log(`The backend service is running on port ${SERVER_PORT} and waiting for requests.`);
