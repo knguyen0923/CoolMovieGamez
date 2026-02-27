@@ -10,6 +10,11 @@ const newHiloScoreSchema = new mongoose.Schema( {
       required: true,
 
     },
+    
+    game: {
+      type: String,
+      required: true,
+    },
 
     //storing final game score
     score: {
@@ -24,6 +29,8 @@ const newHiloScoreSchema = new mongoose.Schema( {
       type: Date,
       default: Date.now,
     },
+
+    
   },
 
   { collection: "HiloScores" }
