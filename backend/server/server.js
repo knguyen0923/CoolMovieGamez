@@ -18,10 +18,10 @@ const hiloCreateRoute = require('./routes/HiloRoutes/HiloCreateRoute')
 const hiloGetRoute = require('./routes/HiloRoutes/HiloGetRoute')
 
 //Leaderboard Routes
-const leaderboardPostRoute = require('./routes/leaderboardRoutes/leaderboardPost')
-const leaderboardGetRoute = require('./routes/leaderboardRoutes/leaderboardGet')
-const leaderboardPutRoute = require('./routes/leaderboardRoutes/leaderboardPut')
-const leaderboardDeleteRoute = require('./routes/leaderboardRoutes/leaderboardDelete')
+const leaderboardPostRoute = require('./routes/leaderboardRoutes/leaderboardPostRoute')
+const leaderboardGetRoute = require('./routes/leaderboardRoutes/leaderboardGetRoute')
+const leaderboardPutRoute = require('./routes/leaderboardRoutes/leaderboardPutRoute')
+const leaderboardDeleteRoute = require('./routes/leaderboardRoutes/leaderboardDeleteRoute')
 
 //UserProfile Route
 const userProfileRoute = require("./routes/userProfileRoute/userProfile")

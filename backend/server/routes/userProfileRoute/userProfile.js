@@ -4,8 +4,8 @@ const express = require("express");
 
 const router = express.Router();
 
-const User = require("../models/userModel");
-const UserProfile = require("../models/UserProfile");
+const User = require("../../models/userModel");
+const UserProfile = require("../../models/UserProfile");
 
 // GET user profile info
 
