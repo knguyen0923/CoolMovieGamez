@@ -16,6 +16,7 @@ const guessrGetRoute = require('./routes/guessrRoutes/guessrGet')
 //HiLo Routes
 const hiloCreateRoute = require('./routes/HiloRoutes/HiloCreateRoute')
 const hiloGetRoute = require('./routes/HiloRoutes/HiloGetRoute')
+const guessrGetLeaderboard = require('./routes/guessrRoutes/guessrGetLeaderboard')
 
 //Leaderboard Routes
 const leaderboardPostRoute = require('./routes/leaderboardRoutes/leaderboardPostRoute')
@@ -42,6 +43,7 @@ app.use('/user', deleteUser)
 //Guessr routes
 app.use('/guessr', guessrCreateRoute)
 app.use('/guessr', guessrGetRoute)
+app.use('/guessr', guessrGetLeaderboard)
 
 //HiLo routes
 app.use('/coolmoviegamez/hilo', hiloCreateRoute)

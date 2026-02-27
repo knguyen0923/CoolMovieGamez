@@ -8,10 +8,10 @@ const guessrSchema = new mongoose.Schema(
       required: true,
       label: "username",
     },
-    email: {
+    game: {
       type: String,
-      required: false,
-      label: "email",
+      required: true,
+      label: "guessr",
     },
     date: {
       type: Date,
@@ -21,7 +21,7 @@ const guessrSchema = new mongoose.Schema(
         type: Number,
         min: 0
     }
-    
+
   },
   { collection: "guessrScores" }
 );

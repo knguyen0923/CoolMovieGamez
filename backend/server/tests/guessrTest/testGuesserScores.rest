@@ -1,0 +1,33 @@
+
+### pulls scores of user tochiamanze
+GET http://localhost:8081/guessr/user/tochiamanze/scores
+
+###
+
+### pulls all scores for the game guessr
+GET http://localhost:8081/guessr/scores
+
+###
+
+
+### saves score for user thomasphilip
+POST http://localhost:8081/guessr/guessrCreate
+Content-Type: application/json 
+
+{
+    "username" : "thomasphilip",
+    "game" : "guessr",
+    "score" :200
+    }
+
+###
+POST http://localhost:8081/guessr/guessrCreate
+Content-Type: application/json 
+
+{
+    "username" : "tochiamanze",
+    "game" : "guessr",
+    "score" :100
+    }
+
+###

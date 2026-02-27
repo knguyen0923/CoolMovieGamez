@@ -1,2 +1,0 @@
-GET http://localhost:8081/guessr/user/tochiamanze/scores
-#mounted from guessr, goes to user/:username/scores to pull scores

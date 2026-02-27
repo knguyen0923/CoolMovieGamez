@@ -1,7 +1,0 @@
-POST http://localhost:8081/guessr/guessrCreate
-Content-Type: application/json 
-
-{
-    "username" : "tochiamanze",
-    "score" :100
-    }
