@@ -1,15 +1,18 @@
-@baseUrl = http://localhost:8081/leaderboard
-
-PUT {{baseUrl}}/hilo/dummyUser
+// Update the highscore of the user "dummyUser" on guessr leaderboard
+PUT http://localhost:8081/leaderboard/guessr/
 Content-Type: application/json
 {
-    "highscore": 150
+    "game": "guessr",
+    "username": "dummyUser",
+    "score": 150
 }
 
 ###
 
-PUT {{baseUrl}}/guessr/dummyUser
+PUT http://localhost:8081/leaderboard/hilo/
 Content-Type: application/json
 {
-    "highscore": 150
+    "game": "hilo",
+    "username": "dummyUser",
+    "score": 150
 }

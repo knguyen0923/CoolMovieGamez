@@ -1,18 +1,18 @@
-# Base URL
+// Post a new user on geussr leaderboard and hilo leaderboard
 @baseUrl = http://localhost:8081/leaderboard/
-POST {{{baseUrl}/guessr}}
+POST http://localhost:8081/leaderboard/guessr
 Content-Type: application/json
 {
     "game": "guessr",
-    "user": "dummyUser",
-    "highscore": 100
+    "username": "dummyUser",
+    "score": 100
 }
 
 ###
-POST {{{baseUrl}/hilo}}
+POST http://localhost:8081/leaderboard/hilo
 Content-Type: application/json
 {
     "game": "hilo",
-    "user": "dummyUser",
-    "highscore": 100
+    "username": "dummyUser",
+    "score": 100
 } 

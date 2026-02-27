@@ -1,6 +1,4 @@
-# Base URL
-@baseUrl = http://localhost:8081/leaderboard/
-delete{{baseUrl}/hilo}
-
-###
-delete{{baseUrl}/guessr}
+// Delete geussr leaderboard and hilo leaderboard
+DELETE  http://localhost:8081/leaderboard/guessr/
+### 
+DELETE http://localhost:8081/leaderboard/hilo/

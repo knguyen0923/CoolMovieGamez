@@ -1,7 +1,5 @@
-# Base URL
-@baseUrl = http://localhost:8081/leaderboard/guessr
-get{{baseUrl}}
+# Get geussr leaderboard and hilo leaderboard
+GET http://localhost:8081/leaderboard/guessr/
 
 ###
-@baseUrl = http://localhost:8081/leaderboard/hilo
-get{{baseUrl}}
+GET http://localhost:8081/leaderboard/hilo/
