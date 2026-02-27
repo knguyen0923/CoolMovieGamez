@@ -1,9 +1,18 @@
 # Base URL
-@baseUrl = http://localhost:8081/coolmoviegamez/leaderboard
-POST {{baseUrl}}/
+@baseUrl = http://localhost:8081/leaderboard/
+POST {{{baseUrl}/guessr}}
 Content-Type: application/json
 {
-    "user": "dummyUser",
     "game": "guessr",
+    "user": "dummyUser",
     "highscore": 100
 }
+
+###
+POST {{{baseUrl}/hilo}}
+Content-Type: application/json
+{
+    "game": "hilo",
+    "user": "dummyUser",
+    "highscore": 100
+} 

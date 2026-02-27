@@ -3,7 +3,7 @@ const router = express.Router();
 const Leaderboard = require("../models/leaderboardModel");
 
 // PUT
-router.put("/:user/:game", async (req, res) => {
+router.put("/:game/:user", async (req, res) => {
   const updated = await Leaderboard.findOneAndUpdate(
     { user: req.params.user, game: req.params.game },
     { highscore: req.body.highscore },

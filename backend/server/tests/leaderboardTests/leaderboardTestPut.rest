@@ -1,13 +1,15 @@
-# Base URL
-@baseUrl = http://localhost:8081/coolmoviegamez/leaderboard
-PUT {{baseUrl}}/:dummyUser/:hilo
-Content-Type: application/json
-{
-    "highscore": 150
-} 
+@baseUrl = http://localhost:8081/leaderboard
 
-PUT {{baseUrl}}/:dummyUser/:guessr
+PUT {{baseUrl}}/hilo/dummyUser
 Content-Type: application/json
 {
     "highscore": 150
-} 
+}
+
+###
+
+PUT {{baseUrl}}/guessr/dummyUser
+Content-Type: application/json
+{
+    "highscore": 150
+}

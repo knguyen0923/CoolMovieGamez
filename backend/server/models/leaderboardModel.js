@@ -4,11 +4,11 @@ const mongoose = require("mongoose");
 
 const newUserSchema = new mongoose.Schema(
   {
-    User: {
+    game: {
       type: String,
       required: true,
     },
-    game: {
+    user: {
       type: String,
       required: true,
     },
@@ -21,7 +21,7 @@ const newUserSchema = new mongoose.Schema(
       default: Date.now,
     },
   },
-  { collection: "Leaderboard" },
+  { collection: "Leaderboards" },
 );
 
 module.exports = mongoose.model("Leaderboard", newUserSchema);

@@ -1,3 +1,6 @@
 # Base URL
-@baseUrl = http://localhost:8081/coolmoviegamez/leaderboard
-delete{{baseUrl}}/
+@baseUrl = http://localhost:8081/leaderboard/
+delete{{baseUrl}/hilo}
+
+###
+delete{{baseUrl}/guessr}
