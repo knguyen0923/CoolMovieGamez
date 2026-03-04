@@ -1,15 +1,49 @@
-@baseUrl = http://localhost:8081/coolmoviegamez/leaderboard
-### Get UserProfile
-GET http://localhost:8081/api/UserProfile/testuser
+@server = http://localhost:8081
+### SIGN UP user (creates entry in users collection)
+POST http://localhost:8081/user/signup
+Content-Type: application/json
 
+{
+  "username": "testuser",
+  "email": "test@test.com",
+  "password": "password123"
+}
 ###
 
-### Update UserProfile
+### GET profile BEFORE it exists (profile will be null)
+GET http://localhost:8081/api/UserProfile/testuser
+###
+
+### UPDATE profile (creates profile if missing)
 PUT http://localhost:8081/api/UserProfile/testuser
 Content-Type: application/json
 
 {
-  "bio": "This is my profile",
+  "bio": "My profile",
   "avatarUrl": "https://site.com/avatar.png",
   "coins": 100
 }
+###
+
+### GET profile AFTER update (profile should now exist)
+GET http://localhost:8081/api/UserProfile/testuser
+###
+
+### GET profile for user that does NOT exist (should return 404)
+GET http://localhost:8081/api/UserProfile/notARealUser
+###
+
+### UPDATE profile with only one field (bio)
+PUT http://localhost:8081/api/UserProfile/testuser
+Content-Type: application/json
+
+{
+  "bio": "Bio"
+}
+###
+
+### GET again to confirm bio updated
+GET http://localhost:8081/api/UserProfile/testuser
+
+### Delete Profile
+DELETE http://localhost:8081/api/UserProfile/account/testuser

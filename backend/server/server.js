@@ -25,7 +25,7 @@ const leaderboardPutRoute = require('./routes/leaderboardRoutes/leaderboardPutRo
 const leaderboardDeleteRoute = require('./routes/leaderboardRoutes/leaderboardDeleteRoute')
 
 //UserProfile Route
-const userProfileRoute = require("./routes/userProfileRoute/userProfile")
+const userProfileRoute = require("./routes/userProfileRoute/userProfile");
 
 require('dotenv').config();
 const SERVER_PORT = 8081
@@ -55,7 +55,7 @@ app.use('/leaderboard', leaderboardPutRoute)
 app.use('/leaderboard', leaderboardDeleteRoute)
 
 //UserProfile routes
-app.use("/api/UserProfile", require("./routes/userProfileRoute/userProfile"));
+app.use("/api/UserProfile", userProfileRoute);
 
 app.listen(SERVER_PORT, (req, res) => {
     console.log(`The backend service is running on port ${SERVER_PORT} and waiting for requests.`);
