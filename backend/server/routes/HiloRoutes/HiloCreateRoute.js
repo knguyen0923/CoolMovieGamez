@@ -21,12 +21,15 @@ router.post("/:username", async (req, res) => {
     }
 
     // creating new HiLo score document
-    const newScore = new HiloScoreModel({
-      username: username,
-      gamemode: gamemode,
-      score: score,
-      date: new Date(),
-    });
+    const game = req.body.game; // or set it yourself
+
+  const newScore = new HiloScoreModel({
+    username,
+    game,
+    gamemode: req.body.gamemode, // only keep if schema also has gamemode
+    score,
+    date: new Date(),
+  });
 
     // saving to mongodb
     await newScore.save();

@@ -11,7 +11,7 @@ const newHiloScoreSchema = new mongoose.Schema( {
 
     },
     
-    game: {
+    gamemode: {
       type: String,
       required: true,
     },
