@@ -15,6 +15,7 @@ import { createContext, useState, useEffect } from "react";
 import getUserInfo from "./utilities/decodeJwt";
 
 import Guessr from "./components/pages/guessr";
+import LeaderboardPage from "./components/pages/leaderboardPage";
 
 export const UserContext = createContext();
 //test change
@@ -51,6 +52,7 @@ const App = () => {
           <Route exact path="/signup" element={<Signup />} />
           <Route path="/privateUserProfile" element={<PrivateUserProfile />} />
           <Route path="/guessr" element={<Guessr />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
         </Routes>
       </UserContext.Provider> 
     </div>
