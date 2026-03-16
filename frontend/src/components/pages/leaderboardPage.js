@@ -10,11 +10,14 @@ function LeaderboardPage() {
 
     //Fetch leaderboard data from backend
     const fetchLeaderboard = async () => {
-    try {
+        try {     
         const response = await fetch(`http://localhost:8081/leaderboard/${game}`);
+        if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+        }
         const data = await response.json();
         setLeaderboard(data);
-    }catch (error) {
+        } catch (error) {
         console.error("Failed to load leaderboard:", error);
     }
 };
@@ -23,11 +26,9 @@ function LeaderboardPage() {
 // Call fetch when page first loads
 // then poll every 3 seconds to update leaderboard in real-time. 
 // Also refetch when game selection changes.
-useEffect(() => {   
+useEffect(() => {
     fetchLeaderboard();
-    const interval = setInterval(() => {
-        fetchLeaderboard();
-    }, 3000); 
+    const interval = setInterval(fetchLeaderboard, 3000);
     return () => clearInterval(interval);
 }, [game]);
 
