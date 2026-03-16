@@ -47,3 +47,4 @@ GET http://localhost:8081/api/UserProfile/testuser
 
 ### Delete Profile
 DELETE http://localhost:8081/api/UserProfile/account/testuser
+

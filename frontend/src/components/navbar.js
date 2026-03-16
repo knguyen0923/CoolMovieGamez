@@ -1,34 +1,55 @@
 import React, { useEffect, useState } from "react";
-import getUserInfo from '../utilities/decodeJwt';
-import Container from 'react-bootstrap/Container';
-import Nav from 'react-bootstrap/Nav';
-import ReactNavbar from 'react-bootstrap/Navbar';
+import getUserInfo from "../utilities/decodeJwt";
+import Container from "react-bootstrap/Container";
+import Nav from "react-bootstrap/Nav";
+import ReactNavbar from "react-bootstrap/Navbar";
 
-
-// Here, we display our Navbar
 export default function Navbar() {
-  // We are pulling in the user's info but not using it for now.
-  // Warning disabled: 
-  // eslint-disable-next-line
-  const [user, setUser] = useState({})
+
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-  setUser(getUserInfo())
-  }, [])
-  
-  // if (!user) return null   - for now, let's show the bar even not logged in.
-  // we have an issue with getUserInfo() returning null after a few minutes
-  // it seems.
+    const userInfo = getUserInfo();
+    setUser(userInfo);
+  }, []);
+
+  // logout function
+  const handleLogout = () => {
+    localStorage.removeItem("token"); // remove JWT
+    window.location.href = "/"; // redirect to home
+  };
+
   return (
     <ReactNavbar bg="dark" variant="dark">
-    <Container>
-      <Nav className="me-auto">
-        <Nav.Link href="/">Start</Nav.Link>
-        <Nav.Link href="/home">Home</Nav.Link>
-        <Nav.Link href="/privateUserProfile">Profile</Nav.Link>
-      </Nav>
-    </Container>
-  </ReactNavbar>
+      <Container>
 
+        <ReactNavbar.Brand href="/">
+          CoolMovieGamez
+        </ReactNavbar.Brand>
+
+        <Nav className="ms-auto">
+
+          {/* Games always visible */}
+          <Nav.Link href="/game1">Game 1</Nav.Link>
+          <Nav.Link href="/game2">Game 2</Nav.Link>
+
+          {/* Only visible when logged in */}
+          {user && (
+            <>
+              <Nav.Link href="/leaderboard">Leaderboard</Nav.Link>
+              <Nav.Link href="/privateUserProfile">User Profile</Nav.Link>
+              <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
+            </>
+          )}
+
+          {/* Only visible when NOT logged in */}
+          {!user && (
+            <Nav.Link href="/login">Login</Nav.Link>
+          )}
+
+        </Nav>
+
+      </Container>
+    </ReactNavbar>
   );
 }

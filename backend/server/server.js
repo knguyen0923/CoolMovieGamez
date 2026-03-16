@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const cors = require('cors')
+const path = require("path");
 const loginRoute = require('./routes/userRoutes/userLogin')
 const getAllUsersRoute = require('./routes/userRoutes/userGetAllUsers')
 const registerRoute = require('./routes/userRoutes/userSignUp')
@@ -32,6 +33,11 @@ const SERVER_PORT = 8081
 dbConnection()
 app.use(cors({origin: '*'}))
 app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
+
+// lets frontend load uploaded images
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 app.use('/user', loginRoute)
 app.use('/user', registerRoute)
 app.use('/user', getAllUsersRoute)
@@ -55,7 +61,7 @@ app.use('/leaderboard', leaderboardPutRoute)
 app.use('/leaderboard', leaderboardDeleteRoute)
 
 //UserProfile routes
-app.use("/api/UserProfile", userProfileRoute);
+app.use("/api/userProfile", userProfileRoute);
 
 app.listen(SERVER_PORT, (req, res) => {
     console.log(`The backend service is running on port ${SERVER_PORT} and waiting for requests.`);
