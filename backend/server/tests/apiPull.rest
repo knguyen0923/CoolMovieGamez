@@ -1,0 +1,2 @@
+//api call to pull information for both games, saving into the DB
+GET https://api.imdbapi.dev/titles?types=MOVIE
