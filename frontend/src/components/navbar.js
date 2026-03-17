@@ -4,7 +4,8 @@ import Container from "react-bootstrap/Container";
 import Nav from "react-bootstrap/Nav";
 import ReactNavbar from "react-bootstrap/Navbar";
 
-export default function Navbar() {
+//changed to pass dark mode toggle
+export default function Navbar({ darkMode, setDarkMode }) {
 
   const [user, setUser] = useState(null);
 
@@ -31,7 +32,7 @@ export default function Navbar() {
 
           {/* Games always visible */}
           <Nav.Link href="/game1">Game 1</Nav.Link>
-          <Nav.Link href="/game2">Game 2</Nav.Link>
+          <Nav.Link href="/guessr">Guessr</Nav.Link>
 
           {/* Only visible when logged in */}
           {user && (
@@ -46,6 +47,11 @@ export default function Navbar() {
           {!user && (
             <Nav.Link href="/login">Login</Nav.Link>
           )}
+
+          {/* Dark Mode Toggle */}
+          <Nav.Link onClick={() => setDarkMode(!darkMode)}>
+            {darkMode ? "🌙" : "☀️"}
+          </Nav.Link>
 
         </Nav>
 

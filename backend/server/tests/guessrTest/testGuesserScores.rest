@@ -20,7 +20,7 @@ Content-Type: application/json
     "score" :200
     }
 
-###
+### submit score for user tochimanze
 POST http://localhost:8081/guessr/guessrCreate
 Content-Type: application/json 
 

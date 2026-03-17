@@ -14,19 +14,35 @@ import PrivateUserProfile from "./components/pages/privateUserProfilePage";
 import { createContext, useState, useEffect } from "react";
 import getUserInfo from "./utilities/decodeJwt";
 
+import Guessr from "./components/pages/guessr";
+
 export const UserContext = createContext();
 //test change
 //test again
 const App = () => {
+
+  //dark mode toggle 
   const [user, setUser] = useState();
+  
+  const [darkMode, setDarkMode] = useState(
+    localStorage.getItem("darkMode") === "true"
+  );
+
+  useEffect(() => {
+  localStorage.setItem("darkMode", darkMode);
+}, [darkMode]);
 
   useEffect(() => {
     setUser(getUserInfo());
   }, []);
 
-  return (
-    <>
-      <Navbar />
+  
+
+  return (  
+   <>
+    <div className={darkMode ? "app dark" : "app"}>
+
+    <Navbar darkMode={darkMode} setDarkMode={setDarkMode} />     
       <UserContext.Provider value={user}>
         <Routes>
           <Route exact path="/" element={<LandingPage />} />
@@ -34,8 +50,10 @@ const App = () => {
           <Route exact path="/login" element={<Login />} />
           <Route exact path="/signup" element={<Signup />} />
           <Route path="/privateUserProfile" element={<PrivateUserProfile />} />
+          <Route path="/guessr" element={<Guessr />} />
         </Routes>
-      </UserContext.Provider>
+      </UserContext.Provider> 
+    </div>
     </>
   );
 };
