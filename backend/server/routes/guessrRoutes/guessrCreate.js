@@ -20,7 +20,7 @@ router.post('/guessrCreate', async (req, res) => {
         res.status(201).json({ message: 'Guessr Score saved successfully' });
       } catch (error) {
         console.error('Error saving score:', error);
-        res.status(500).json({ message: 'Failed to save score' });
+        res.status(400).json({ message: 'Failed to save score' });
   } 
 })
   module.exports = router;

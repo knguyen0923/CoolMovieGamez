@@ -28,6 +28,11 @@ const leaderboardDeleteRoute = require('./routes/leaderboardRoutes/leaderboardDe
 //UserProfile Route
 const userProfileRoute = require("./routes/userProfileRoute/userProfile");
 
+//api routes
+const apiCreateData = require('./routes/apiRoutes/apiCreateData')
+const apiGet = require('./routes/apiRoutes/apiGet')
+const apiDeleteAll = require('./routes/apiRoutes/apiDeleteAll')
+
 require('dotenv').config();
 const SERVER_PORT = 8081
 dbConnection()
@@ -62,6 +67,12 @@ app.use('/leaderboard', leaderboardDeleteRoute)
 
 //UserProfile routes
 app.use("/api/userProfile", userProfileRoute);
+
+//imdbapi.dev route
+app.use('/api', apiCreateData);
+app.use('/api', apiGet);
+app.use('/api', apiDeleteAll);
+
 
 app.listen(SERVER_PORT, (req, res) => {
     console.log(`The backend service is running on port ${SERVER_PORT} and waiting for requests.`);

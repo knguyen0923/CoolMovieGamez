@@ -1,0 +1,12 @@
+### puts data in the database
+PUT http://localhost:8081/api/createData
+
+###api call to pull information for both games, this will be used to pull the data for the games
+###pulls 20 movies from the MDB at random
+
+GET http://localhost:8081/api/get/
+
+### Nuke the movie database
+DELETE http://localhost:8081/api/deleteAll
+
+###
