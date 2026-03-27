@@ -33,9 +33,7 @@ export default function Navbar({ darkMode, setDarkMode }) {
           {/* Games always visible */}
           <Nav.Link href="/hilo">Hilo</Nav.Link>
           <Nav.Link href="/guessr">Guessr</Nav.Link>
-          {/* Double code added just for testing*/}
-          <Nav.Link href="/leaderboard">Leaderboard</Nav.Link>
-          {/* Only visible when logged in */}
+  
           {user && (
             <>
               <Nav.Link href="/leaderboard">Leaderboard</Nav.Link>
