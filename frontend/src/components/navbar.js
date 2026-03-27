@@ -31,7 +31,7 @@ export default function Navbar({ darkMode, setDarkMode }) {
         <Nav className="ms-auto">
 
           {/* Games always visible */}
-          <Nav.Link href="/game1">Game 1</Nav.Link>
+          <Nav.Link href="/hilo">Hilo</Nav.Link>
           <Nav.Link href="/guessr">Guessr</Nav.Link>
           {/* Double code added just for testing*/}
           <Nav.Link href="/leaderboard">Leaderboard</Nav.Link>
