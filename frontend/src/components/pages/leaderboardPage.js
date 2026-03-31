@@ -34,42 +34,61 @@ useEffect(() => {
 
 
 //JSX returned by component (UI Layout)
-return (
-    <div style={{ padding: "40px", textAlign: "center" }}>
-        <h1>Leaderboard</h1>
-        <div style={{ marginBottom: "20px" }}>
-        <label>Game: </label>
-        <select value={game} onChange={(e) => setGame(e.target.value)}>
-        <option value="hilo">HiLo</option>
-        <option value="guessr">Guessr</option>
-        </select>
-    </div>
+    return (
+        <div className="leaderboard-container">
+            <div className="leaderboard-card">
 
-    <table style={{
-        margin: "auto",
-        borderCollapse: "collapse",
-        width: "60%",
-    }}>
-    <thead>
-        <tr style={{ backgroundColor: "#333", color: "white" }}>
-            <th style={{ padding: "10px" }}>Rank</th>
-            <th style={{ padding: "10px" }}>Player</th>
-            <th style={{ padding: "10px" }}>Score</th>
-        </tr>
-        </thead>
+                <h1>🏆 Leaderboard</h1>
 
-        <tbody>
-        {leaderboard.map((entry, index) => (
-            <tr key={entry._id} style={{ borderBottom: "1px solid #ddd" }}>
-            <td style={{ padding: "10px" }}>{index + 1}</td>
-            <td style={{ padding: "10px" }}>{entry.username}</td>
-            <td style={{ padding: "10px" }}>{entry.score}</td>
-            </tr>
-        ))}
-        </tbody>
-    </table>
-    </div>
-);
+                <h2 className="game-title">
+                    {game.toUpperCase()}
+                </h2>
+
+                <div className="select-wrapper">
+                    <select
+                        value={game}
+                        onChange={(e) => setGame(e.target.value)}
+                    >
+                        <option value="hilo">Hilo</option>
+                        <option value="guessr">Guessr</option>
+                    </select>
+                </div>
+
+                <table className="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Player</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {leaderboard.map((entry, index) => (
+                            <tr
+                                key={entry._id}
+                                className={index < 3 ? "top-player" : ""}
+                            >
+                                <td>
+                                    {index === 0 ? "🥇" :
+                                     index === 1 ? "🥈" :
+                                     index === 2 ? "🥉" :
+                                     index + 1}
+                                </td>
+
+                                <td>{entry.username}</td>
+
+                                <td className="score">
+                                    {entry.score}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+    );
 }
 
 export default LeaderboardPage;

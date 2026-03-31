@@ -8,11 +8,174 @@ Content-Type: application/json
 }
 
 ###
+PUT http://localhost:8081/leaderboard/hilo
+Content-Type: application/json
+
+{
+  "username": "Bob",
+  "score": 30
+}
+
+###
+PUT http://localhost:8081/leaderboard/hilo
+Content-Type: application/json
+
+{
+  "username": "Cameron",
+  "score": 67
+}
+
+###
+PUT http://localhost:8081/leaderboard/hilo
+Content-Type: application/json
+
+{
+  "username": "Dan",
+  "score": 10
+}
+
+###
+PUT http://localhost:8081/leaderboard/hilo
+Content-Type: application/json
+
+{
+  "username": "Evelyn",
+  "score": 100
+}
+
+###
+PUT http://localhost:8081/leaderboard/hilo
+Content-Type: application/json
+
+{
+  "username": "Felix",
+  "score": 1000
+}
+
+###
+PUT http://localhost:8081/leaderboard/hilo
+Content-Type: application/json
+
+{
+  "username": "Gigi",
+  "score": 300
+}
+
+###
+PUT http://localhost:8081/leaderboard/hilo
+Content-Type: application/json
+
+{
+  "username": "Hank",
+  "score": 68
+}
+
+###
+PUT http://localhost:8081/leaderboard/hilo
+Content-Type: application/json
+
+{
+  "username": "Isaac",
+  "score": 4
+}
+
+###
+PUT http://localhost:8081/leaderboard/hilo
+Content-Type: application/json
+
+{
+  "username": "Jamie",
+  "score": 700
+}
+
+###
 // PUT higher score for Guessr leaderboard
 PUT http://localhost:8081/leaderboard/guessr
 Content-Type: application/json
 
 {
   "username": "Alice",
-  "score": 25
+  "score": 2500
+}
+
+###
+PUT http://localhost:8081/leaderboard/guessr
+Content-Type: application/json
+
+{
+  "username": "Bob",
+  "score": 4200
+}
+
+###
+PUT http://localhost:8081/leaderboard/guessr
+Content-Type: application/json
+
+{
+  "username": "Cameron",
+  "score": 690
+}
+
+
+###
+PUT http://localhost:8081/leaderboard/guessr
+Content-Type: application/json
+
+{
+  "username": "Dan",
+  "score": 100
+}
+
+###
+PUT http://localhost:8081/leaderboard/guessr
+Content-Type: application/json
+
+{
+  "username": "Evelyn",
+  "score": 1000
+}
+
+###
+PUT http://localhost:8081/leaderboard/guessr
+Content-Type: application/json
+
+{
+  "username": "Felix",
+  "score": 10000
+}
+
+###
+PUT http://localhost:8081/leaderboard/guessr
+Content-Type: application/json
+
+{
+  "username": "Gigi",
+  "score": 3000
+}
+
+###
+PUT http://localhost:8081/leaderboard/guessr
+Content-Type: application/json
+
+{
+  "username": "Hank",
+  "score": 680
+}
+
+###
+PUT http://localhost:8081/leaderboard/guessr
+Content-Type: application/json
+
+{
+  "username": "Isaac",
+  "score": 40
+}
+
+###
+PUT http://localhost:8081/leaderboard/guessr
+Content-Type: application/json
+
+{
+  "username": "Jamie",
+  "score": 7000
 }

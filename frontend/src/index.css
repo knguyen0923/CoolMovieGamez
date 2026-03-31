@@ -1,3 +1,127 @@
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
+
+
+/* ===== GLOBAL APP STYLES ===== */
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+/* Light mode */
+.app {
+  background-color: #f8fafc;
+  color: #111827;
+  min-height: 100vh;
+}
+
+/* Dark mode */
+.app.dark {
+  background-color: #0f172a;
+  color: white;
+}
+
+/* ===== LEADERBOARD LAYOUT ===== */
+
+.leaderboard-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 40px;
+}
+
+.leaderboard-card {
+  width: 700px;
+  padding: 30px;
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+/* Light mode card */
+.app .leaderboard-card {
+  background: white;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+/* Dark mode card */
+.app.dark .leaderboard-card {
+  background: #111827;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+/* ===== TITLES ===== */
+
+.game-title {
+  margin-bottom: 20px;
+  color: #3b82f6;
+}
+
+/* ===== DROPDOWN ===== */
+
+.select-wrapper {
+  margin-bottom: 20px;
+}
+
+.select-wrapper select {
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+/* Dark mode dropdown */
+.app.dark .select-wrapper select {
+  background: #1f2937;
+  color: white;
+  border: 1px solid #374151;
+}
+
+/* ===== TABLE ===== */
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.leaderboard-table th {
+  text-align: left;
+  padding: 12px;
+}
+
+.leaderboard-table td {
+  padding: 12px;
+}
+
+/* Table header */
+.app .leaderboard-table thead {
+  background: #e5e7eb;
+}
+
+.app.dark .leaderboard-table thead {
+  background: #1f2937;
+}
+
+/* Row borders */
+.leaderboard-table tr {
+  border-bottom: 1px solid #d1d5db;
+}
+
+.app.dark .leaderboard-table tr {
+  border-bottom: 1px solid #374151;
+}
+
+/* ===== TOP PLAYERS ===== */
+
+.top-player {
+  font-weight: bold;
+}
+
+/* ===== SCORE COLOR ===== */
+
+.score {
+  color: #22c55e;
+}

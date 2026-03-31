@@ -30,13 +30,12 @@ export default function Navbar({ darkMode, setDarkMode }) {
 
         <Nav className="ms-auto">
 
-          {/* Games always visible */}
+          {/* Games & Leaderboard always visible */}
           <Nav.Link href="/hilo">Hilo</Nav.Link>
           <Nav.Link href="/guessr">Guessr</Nav.Link>
-  
+          <Nav.Link href="/leaderboard">Leaderboard</Nav.Link>
           {user && (
             <>
-              <Nav.Link href="/leaderboard">Leaderboard</Nav.Link>
               <Nav.Link href="/privateUserProfile">User Profile</Nav.Link>
               <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
             </>
