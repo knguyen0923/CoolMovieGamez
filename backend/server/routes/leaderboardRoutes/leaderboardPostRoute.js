@@ -5,7 +5,7 @@ const Leaderboard = require("../../models/leaderboardModel");
 // POST /leaderboard/:game
 router.post("/:game", async (req, res) => {
   try {
-    const game = req.params.game;
+    const game = req.params.game.toLowerCase().trim();
     const username = req.body.username;
     const score = Number(req.body.score);
 

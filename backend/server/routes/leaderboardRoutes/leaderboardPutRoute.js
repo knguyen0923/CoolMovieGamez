@@ -5,7 +5,7 @@ const Leaderboard = require("../../models/leaderboardModel");
 // PUT /leaderboard/:game
 router.put("/:game", async (req, res) => {
   try {
-    const game = req.params.game;
+    const game = req.params.game.toLowerCase().trim();
     const username = req.body.username;
     const score = Number(req.body.score);
 
@@ -17,7 +17,7 @@ router.put("/:game", async (req, res) => {
 
     if (!existing) {
       const newEntry = new Leaderboard({
-        game,
+        game: game.toLowerCase().trim(),
         username,
         score,
         updatedAt: new Date(),

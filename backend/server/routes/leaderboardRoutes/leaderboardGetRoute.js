@@ -5,7 +5,7 @@ const Leaderboard = require("../../models/leaderboardModel");
 // GET /leaderboard/:game  -> top 10 scores for that game
 router.get("/:game", async (req, res) => {
   try {
-    const game = req.params.game;
+    const game = req.params.game.toLowerCase().trim();
 
     const leaderboard = await Leaderboard.find({ game })
       .sort({ score: -1, updatedAt: -1 })
