@@ -1,5 +1,5 @@
 // PUT higher score for HiLo leaderboard
-PUT http://localhost:8081/leaderboard/HiLo
+PUT http://localhost:8081/leaderboard/hilo
 Content-Type: application/json
 
 {
@@ -9,7 +9,7 @@ Content-Type: application/json
 
 ###
 // PUT higher score for Guessr leaderboard
-PUT http://localhost:8081/leaderboard/Guessr
+PUT http://localhost:8081/leaderboard/guessr
 Content-Type: application/json
 
 {

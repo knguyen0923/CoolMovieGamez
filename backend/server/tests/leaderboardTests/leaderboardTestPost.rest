@@ -1,5 +1,5 @@
 // Test for HiLo leaderboard POST 
-POST http://localhost:8081/leaderboard/HiLo
+POST http://localhost:8081/leaderboard/hilo
 Content-Type: application/json
 
 {
@@ -9,7 +9,7 @@ Content-Type: application/json
 
 ###
 // Test for Guessr leaderboard POST
-POST http://localhost:8081/leaderboard/Guessr
+POST http://localhost:8081/leaderboard/guessr
 Content-Type: application/json
 
 {

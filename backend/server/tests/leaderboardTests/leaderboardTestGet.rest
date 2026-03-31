@@ -1,7 +1,7 @@
 //GET top 10 HiLo
-GET http://localhost:8081/leaderboard/HiLo
+GET http://localhost:8081/leaderboard/hilo
 
 ###
 
 //GET top 10 Guessr
-GET http://localhost:8081/leaderboard/Guessr
+GET http://localhost:8081/leaderboard/guessr
