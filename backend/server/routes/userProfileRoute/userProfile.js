@@ -5,6 +5,7 @@ const UserProfile = require("../../models/UserProfile");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const bcrypt = require("bcrypt");
 
 // make sure uploads folder exists
 const uploadFolder = path.join(__dirname, "../../uploads");
@@ -50,7 +51,6 @@ router.get("/:username", async (req, res) => {
       user: foundUser,
       profile: userProfile
     });
-
   } catch (error) {
     console.error("GET PROFILE ERROR:", error);
 
@@ -60,28 +60,90 @@ router.get("/:username", async (req, res) => {
   }
 });
 
-// UPDATE user profile
+// UPDATE user profile + optional password change
 router.put("/:username", upload.single("avatar"), async (req, res) => {
   const name = req.params.username;
-  const bioText = req.body.bio;
+  const {
+    firstName,
+    lastName,
+    email,
+    bio,
+    currentPassword,
+    newPassword
+  } = req.body;
 
   console.log("----- PROFILE UPDATE REQUEST -----");
   console.log("Username:", name);
-  console.log("Bio:", bioText);
+  console.log("First Name:", firstName);
+  console.log("Last Name:", lastName);
+  console.log("Email:", email);
+  console.log("Bio:", bio);
+  console.log("Current Password Provided:", !!currentPassword);
+  console.log("New Password Provided:", !!newPassword);
   console.log("File received:", req.file);
 
   try {
+    const foundUser = await User.findOne({ username: name });
+
+    if (!foundUser) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
+
     let userProfile = await UserProfile.findOne({ username: name });
 
     if (!userProfile) {
       userProfile = await UserProfile.create({ username: name });
     }
 
-    if (bioText !== undefined) {
-      userProfile.bio = bioText;
+    // update main user info
+    if (firstName !== undefined) {
+      foundUser.firstName = firstName;
     }
 
-    // save uploaded avatar path
+    if (lastName !== undefined) {
+      foundUser.lastName = lastName;
+    }
+
+    if (email !== undefined) {
+      foundUser.email = email;
+    }
+
+    // password change logic
+    if ((currentPassword && !newPassword) || (!currentPassword && newPassword)) {
+      return res.status(400).json({
+        message: "Both current and new password must be entered"
+      });
+    }
+
+    if (currentPassword && newPassword) {
+      const validPassword = await bcrypt.compare(
+        currentPassword,
+        foundUser.password
+      );
+
+      if (!validPassword) {
+        return res.status(400).json({
+          message: "Current password is incorrect"
+        });
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(newPassword, salt);
+      foundUser.password = hashedPassword;
+
+      console.log("Password updated for user:", name);
+    }
+
+    await foundUser.save();
+
+    // update profile info
+    if (bio !== undefined) {
+      userProfile.bio = bio;
+    }
+
+    // save uploaded avatar path if file was uploaded
     if (req.file) {
       console.log("Saving avatar file:", req.file.filename);
       userProfile.avatarUrl = `/uploads/${req.file.filename}`;
@@ -95,9 +157,9 @@ router.put("/:username", upload.single("avatar"), async (req, res) => {
 
     return res.json({
       message: "UserProfile updated",
+      user: await User.findOne({ username: name }).select("-password"),
       profile: userProfile
     });
-
   } catch (error) {
     console.error("PUT PROFILE ERROR:", error);
 
@@ -125,7 +187,6 @@ router.delete("/account/:username", async (req, res) => {
     return res.json({
       message: "User account and profile deleted"
     });
-
   } catch (error) {
     console.error("DELETE PROFILE ERROR:", error);
 
