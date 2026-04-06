@@ -36,7 +36,8 @@ router.post("/login", async (req, res) => {
     user.email,
     user.username,
     user.firstName,
-    user.lastName
+    user.lastName,
+    user.role
   );
 
   res.header("Authorization", accessToken).send({ accessToken: accessToken });
