@@ -17,6 +17,7 @@ import getUserInfo from "./utilities/decodeJwt";
 import Hilo from "./components/pages/hilo";
 import Guessr from "./components/pages/guessr";
 import LeaderboardPage from "./components/pages/leaderboardPage";
+import AdminPage from "./components/pages/adminPage";
 
 export const UserContext = createContext();
 //test change
@@ -55,6 +56,7 @@ const App = () => {
           <Route path="/guessr" element={<Guessr />} />
           <Route path="/hilo" element={<Hilo />} />
           <Route path="/leaderboard" element={<LeaderboardPage />} />
+          <Route path="/admin" element={<AdminPage />} />
         </Routes>
       </UserContext.Provider> 
     </div>

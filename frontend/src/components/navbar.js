@@ -4,6 +4,7 @@ import getUserInfo from "../utilities/decodeJwt";
 import Container from "react-bootstrap/Container";
 import Nav from "react-bootstrap/Nav";
 import ReactNavbar from "react-bootstrap/Navbar";
+import { Link } from "react-router-dom";
 
 // changed to pass dark mode toggle
 export default function Navbar({ darkMode, setDarkMode }) {
@@ -31,6 +32,13 @@ export default function Navbar({ darkMode, setDarkMode }) {
           <Nav.Link href="/hilo">Hilo</Nav.Link>
           <Nav.Link href="/guessr">Guessr</Nav.Link>
           <Nav.Link href="/leaderboard">Leaderboard</Nav.Link>
+
+          {/* only show admin link if user is admin */}
+          {user?.role === "admin" && (
+            <Nav.Link as={Link} to="/admin" className="text-danger fw-bold">
+              Admin
+            </Nav.Link>
+          )}
 
           {user && (
             <>

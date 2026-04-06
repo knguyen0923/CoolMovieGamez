@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
+
 
 function LeaderboardPage() {
 
@@ -8,29 +10,32 @@ function LeaderboardPage() {
     // State to track which game leaderboard is selected, default to "hilo"
     const [game, setGame] = useState("hilo");
 
+    // loading state
+    const [loading, setLoading] = useState(true);
+    
     //Fetch leaderboard data from backend
     const fetchLeaderboard = async () => {
-        try {     
-        const response = await fetch(`http://localhost:8081/leaderboard/${game}`);
-        if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
-        }
-        const data = await response.json();
-        setLeaderboard(data);
+        try { 
+            setLoading(true)
+            const response = await fetch(`http://localhost:8081/leaderboard/${game}`);
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+            const data = await response.json();
+            setLeaderboard(data);
         } catch (error) {
-        console.error("Failed to load leaderboard:", error);
-    }
-};
-
+            console.error("Failed to load leaderboard:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
 // Call fetch when page first loads
 // then poll every 3 seconds to update leaderboard in real-time. 
 // Also refetch when game selection changes.
 useEffect(() => {
     fetchLeaderboard();
-    const interval = setInterval(fetchLeaderboard, 3000);
-    return () => clearInterval(interval);
-}, [game]);
+    }, [game, location]);
 
 
 //JSX returned by component (UI Layout)
