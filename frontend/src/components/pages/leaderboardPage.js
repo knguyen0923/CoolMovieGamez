@@ -12,7 +12,8 @@ function LeaderboardPage() {
 
     // loading state
     const [loading, setLoading] = useState(true);
-    
+    const currentLocation = useLocation();
+
     //Fetch leaderboard data from backend
     const fetchLeaderboard = async () => {
         try { 
@@ -35,7 +36,7 @@ function LeaderboardPage() {
 // Also refetch when game selection changes.
 useEffect(() => {
     fetchLeaderboard();
-    }, [game, location]);
+    }, [game, currentLocation]);
 
 
 //JSX returned by component (UI Layout)
