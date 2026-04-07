@@ -38,3 +38,25 @@
     background-color: #1e1e1e;
     color: white;
 }
+
+.app.dark input {
+  background-color: #2a2a2a;
+  color: white;
+  border: 1px solid #444;
+}
+
+.app.dark input::placeholder {
+  color: #aaa;
+}
+
+.app.dark input:focus {
+  background-color: #2a2a2a;
+  color: white;
+  border-color: #666;
+  box-shadow: none;
+  outline: none;
+}
+
+.app input {
+  border: 1px solid #ced4da; 
+}

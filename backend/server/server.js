@@ -13,6 +13,7 @@ const deleteUser = require('./routes/userRoutes/userDeleteAll')
 //Guessr Routes
 const guessrCreateRoute = require('./routes/guessrRoutes/guessrCreate')
 const guessrGetRoute = require('./routes/guessrRoutes/guessrGet')
+const guessrPlay = require('./routes/guessrRoutes/guessrPlay')
 
 //HiLo Routes
 const hiloCreateRoute = require('./routes/HiloRoutes/HiloCreateRoute')
@@ -54,6 +55,7 @@ app.use('/user', deleteUser)
 app.use('/guessr', guessrCreateRoute)
 app.use('/guessr', guessrGetRoute)
 app.use('/guessr', guessrGetLeaderboard)
+app.use('/guessr', guessrPlay)
 
 //HiLo routes
 app.use('/coolmoviegamez/hilo', hiloCreateRoute)

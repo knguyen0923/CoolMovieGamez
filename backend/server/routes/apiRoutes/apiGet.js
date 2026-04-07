@@ -16,7 +16,7 @@ router.get('/get', async (req, res) => {
 
         } catch (error) {
             
-        console.error('Could not get scores:', error);
+        console.error('Could not get movies:', error);
         res.status(400).json({ message: 'Failed to get movies :(' });
     }
   })
