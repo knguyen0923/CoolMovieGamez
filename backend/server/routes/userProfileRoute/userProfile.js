@@ -55,6 +55,8 @@ router.put("/:username", upload.single("avatar"), async (req, res) => {
     lastName,
     email,
     bio,
+    coins,
+    coinsDelta,
     currentPassword,
     newPassword
   } = req.body;
@@ -128,6 +130,30 @@ router.put("/:username", upload.single("avatar"), async (req, res) => {
     // update profile info
     if (bio !== undefined) {
       userProfile.bio = bio;
+    }
+
+    if (coins !== undefined) {
+      const parsedCoins = Number(coins);
+
+      if (Number.isNaN(parsedCoins)) {
+        return res.status(400).json({
+          message: "coins must be numeric"
+        });
+      }
+
+      userProfile.coins = Math.max(0, parsedCoins);
+    }
+
+    if (coinsDelta !== undefined) {
+      const parsedCoinsDelta = Number(coinsDelta);
+
+      if (Number.isNaN(parsedCoinsDelta)) {
+        return res.status(400).json({
+          message: "coinsDelta must be numeric"
+        });
+      }
+
+      userProfile.coins = Math.max(0, (userProfile.coins || 0) + parsedCoinsDelta);
     }
 
     // upload avatar to S3
