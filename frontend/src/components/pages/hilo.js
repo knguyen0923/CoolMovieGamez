@@ -1,9 +1,19 @@
-import React, { useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
+import { UserContext } from '../../App';
+import getUserInfo from '../../utilities/decodeJwt';
 
 // base url for the backend stuff
 const API_BASE = 'http://localhost:8081';
+const MAX_ROUND_SCORE = 5000;
+const SCORE_DECAY_PER_MS = 1;
+const MIN_ROUND_SCORE = 500;
+const COIN_DIVISOR = 10;
+const HIGH_SCORE_STORAGE_KEY = 'hilo-high-score';
+
+const formatVoteCount = (value) => Number(value || 0).toLocaleString();
+const formatResponseTime = (ms) => `${(ms / 1000).toFixed(1)}s`;
 
 
 
@@ -468,6 +478,8 @@ const hiloStyles = `
 `;
 
 const Hilo = () => {
+    const contextUser = useContext(UserContext);
+    const user = contextUser || getUserInfo();
 
     // are we in the game yet
     const [gameStarted, setGameStarted] = useState(false);
@@ -475,7 +487,15 @@ const Hilo = () => {
     //current score
     const [score, setScore] = useState(0);
 
-    //best score so far, just in this sesion 
+    //coin total for the current run
+    const [coins, setCoins] = useState(0);
+
+    // round win counters
+    const [streak, setStreak] = useState(0);
+    const [bestStreak, setBestStreak] = useState(0);
+    const [roundsWon, setRoundsWon] = useState(0);
+
+    //best score so far, stored locally
     const [highScore, setHighScore] =  useState(0);
 
     //message box text
@@ -484,14 +504,77 @@ const Hilo = () => {
     // holds the 2 movies on the screen
     const [movies, setMovies] = useState([]);
 
+    // queued challengers so the game does not need to refetch every guess
+    const [moviePool, setMoviePool] = useState([]);
+
     //stops spam clicking if the fetch is still going
     const [isLoading, setIsLoading] = useState(false);
 
     // if the api fails or smth this shows what happened
     const [errorMessage, setErrorMessage]= useState('');
 
+    const roundStartedAtRef = useRef(null);
+
+    useEffect(() => {
+        const storedHighScore = Number(localStorage.getItem(HIGH_SCORE_STORAGE_KEY) || 0);
+        if (!Number.isNaN(storedHighScore)) {
+            setHighScore(storedHighScore);
+        }
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem(HIGH_SCORE_STORAGE_KEY, String(highScore));
+    }, [highScore]);
+
+    const saveLeaderboardScore = async (finalScore) => {
+        if (!user?.username || finalScore <= 0) {
+            return;
+        }
+
+        const response = await fetch(`${API_BASE}/leaderboard/hilo`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                username: user.username,
+                score: finalScore,
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Leaderboard save failed: ${response.status}`);
+        }
+    };
+
+    const awardCoinsToProfile = async (coinsEarned) => {
+        if (!user?.username || coinsEarned <= 0) {
+            return;
+        }
+
+        const response = await fetch(`${API_BASE}/api/userProfile/${user.username}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                coinsDelta: coinsEarned,
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Coin update failed: ${response.status}`);
+        }
+    };
+
+    const calculateRoundScore = (timeTakenMs) => (
+        Math.max(MIN_ROUND_SCORE, MAX_ROUND_SCORE - (timeTakenMs * SCORE_DECAY_PER_MS))
+    );
+
+    const calculateRoundCoins = (roundScore) => Math.floor(roundScore / COIN_DIVISOR);
+
     //just gets a list of random movies w posters from the backend
-    const fetchPosterMovies = async () => {
+    const fetchPosterMovies = async (excludedMovieIds = []) => {
         const response = await fetch(`${API_BASE}/api/get`);
 
         if (!response.ok) {
@@ -499,8 +582,27 @@ const Hilo = () => {
         }
 
         const data = await response.json();
+        const seenMovieIds = new Set(excludedMovieIds);
 
-        return data.filter((movie) => movie.poster && movie.poster !== 'n/a');
+        return data.filter((movie) => {
+            if (!movie.poster || movie.poster === 'n/a') {
+                return false;
+            }
+
+            if (!movie.movieid || seenMovieIds.has(movie.movieid)) {
+                return false;
+            }
+
+            seenMovieIds.add(movie.movieid);
+            return true;
+        });
+    };
+
+    const beginRound = (nextMovies, nextPool, nextMessage) => {
+        setMovies(nextMovies);
+        setMoviePool(nextPool);
+        roundStartedAtRef.current = Date.now();
+        setStatusMessage(nextMessage);
     };
 
     // grab random movies from backend, then keep 2 with posters
@@ -510,84 +612,146 @@ const Hilo = () => {
         setStatusMessage('Loading a new movie matchup...');
 
         try {
-            const moviesWithPosters= await fetchPosterMovies();
-
-            //just using the first 2 for now
+            const moviesWithPosters = await fetchPosterMovies();
             const matchup = moviesWithPosters.slice(0, 2);
 
             if (matchup.length < 2) {
                 throw new Error('Not enough movies with posters were returned.');
             }
 
-            setMovies(matchup);
-            setStatusMessage('Pick a movie to keep on the board and a new challenger will swap in.');
+            beginRound(
+                matchup,
+                moviesWithPosters.slice(2),
+                'Pick the movie you think has more IMDb votes. Faster correct answers are worth more points.'
+            );
         } catch (error) {
             console.error('Failed to load HiLo movies:', error);
+            setGameStarted(false);
             setMovies([]);
-
+            setMoviePool([]);
 
             //decent fallback msg if the db/api isnt ready yet
             setErrorMessage('Could not load movies yet. Make sure the backend is running and movie data has been created.');
-            setStatusMessage('Unable to start a round right now.') ;
+            setStatusMessage('Unable to start a round right now.');
         } finally{
             setIsLoading(false);
         }
     };
 
+    const getReplacementMovie = async (excludedMovieIds) => {
+        const pooledReplacement = moviePool.find((movie) => !excludedMovieIds.includes(movie.movieid));
 
+        if (pooledReplacement) {
+            const remainingPool = moviePool.filter((movie) => movie.movieid !== pooledReplacement.movieid);
+            return { replacementMovie: pooledReplacement, remainingPool };
+        }
+
+        const refreshedPool = await fetchPosterMovies(excludedMovieIds);
+        const [replacementMovie, ...remainingPool] = refreshedPool;
+
+        if (!replacementMovie) {
+            throw new Error('Could not find a different movie to swap in.');
+        }
+
+        return { replacementMovie, remainingPool };
+    };
+
+    const finishGame = async (endMessage, finalScore = score, finalCoins = coins) => {
+        let nextStatusMessage = `${endMessage} Final score: ${finalScore}. Coins earned: ${finalCoins}.`;
+
+        setIsLoading(true);
+        setGameStarted(false);
+        setMovies([]);
+        setMoviePool([]);
+        setErrorMessage('');
+        setStreak(0);
+        roundStartedAtRef.current = null;
+
+        try {
+            if (user?.username) {
+                await Promise.all([
+                    saveLeaderboardScore(finalScore),
+                    awardCoinsToProfile(finalCoins),
+                ]);
+
+                if (finalScore > 0 || finalCoins > 0) {
+                    nextStatusMessage += ' Your score and coins were saved.';
+                }
+            } else if (finalScore > 0 || finalCoins > 0) {
+                nextStatusMessage += ' Log in to save your score and coins.';
+            }
+        } catch (error) {
+            console.error('Failed to save HiLo rewards:', error);
+            setErrorMessage('Your run ended, but your leaderboard score or coins could not be saved.');
+            nextStatusMessage += ' Saving failed this time.';
+        } finally {
+            setHighScore((currentHighScore) => Math.max(currentHighScore, finalScore));
+            setStatusMessage(nextStatusMessage);
+            setIsLoading(false);
+        }
+    };
 
     //start the game + load first 2 movies
     const handleStartGame = async () => {
         setGameStarted(true);
         setScore(0);
+        setCoins(0);
+        setStreak(0);
+        setBestStreak(0);
+        setRoundsWon(0);
         await loadMovieMatchup();
     };
 
-
-
-
     //end game, save highscore if needed, reset some stuff
-    const handleEndGame = () => {
-        setHighScore((currentHighScore) => Math.max(currentHighScore, score));
-        setGameStarted(false);
-        setMovies([]);
-        setErrorMessage('');
-        setStatusMessage('Game over. Start a new round whenever you are ready.');
+    const handleEndGame = async () => {
+        await finishGame('Game over. Start a new round whenever you are ready.');
     };
 
-    // click one of the movie buttons, keep that movie,swap the other one out
+    // click one of the movie buttons and resolve the round
     const handleKeepMovie = async (sidePicked) => {
         if (isLoading || movies.length !== 2) {
             return;
         }
 
         const keepLeft = sidePicked === 'left';
-        const movieToKeep = keepLeft ? movies[0] : movies[1];
-        const movieToSwap = keepLeft ? movies[1] : movies[0];
+        const pickedMovie = keepLeft ? movies[0] : movies[1];
+        const otherMovie = keepLeft ? movies[1] : movies[0];
+        const pickedVotes = Number(pickedMovie.votecount || 0);
+        const otherVotes = Number(otherMovie.votecount || 0);
+        const responseTimeMs = Math.max(0, Date.now() - (roundStartedAtRef.current || Date.now()));
+        const isCorrectGuess = pickedVotes >= otherVotes;
 
         setIsLoading(true);
         setErrorMessage('');
-        setStatusMessage(`Keeping ${movieToKeep.title} on the board...`);
 
         try {
-            const moviesWithPosters = await fetchPosterMovies();
+            if (!isCorrectGuess) {
+                setBestStreak((currentBest) => Math.max(currentBest, streak));
+                await finishGame(
+                    `Wrong guess. ${otherMovie.title} had more IMDb votes than ${pickedMovie.title} (${formatVoteCount(otherVotes)} vs ${formatVoteCount(pickedVotes)}).`
+                );
+                return;
+            }
 
-            const replacementMovie = moviesWithPosters.find((movie) =>
-                movie.movieid !== movieToKeep.movieid && movie.movieid !== movieToSwap.movieid
+            const roundScore = calculateRoundScore(responseTimeMs);
+            const roundCoins = calculateRoundCoins(roundScore);
+            const { replacementMovie, remainingPool } = await getReplacementMovie([pickedMovie.movieid, otherMovie.movieid]);
+            const nextMovies = keepLeft
+                ? [pickedMovie, replacementMovie]
+                : [replacementMovie, pickedMovie];
+            const nextStreak = streak + 1;
+
+            setScore((currentScore) => currentScore + roundScore);
+            setCoins((currentCoins) => currentCoins + roundCoins);
+            setRoundsWon((currentRounds) => currentRounds + 1);
+            setStreak(nextStreak);
+            setBestStreak((currentBest) => Math.max(currentBest, nextStreak));
+
+            beginRound(
+                nextMovies,
+                remainingPool,
+                `Correct. ${pickedMovie.title} wins with ${formatVoteCount(pickedVotes)} votes. +${roundScore} score, +${roundCoins} coins in ${formatResponseTime(responseTimeMs)}.`
             );
-
-            if (!replacementMovie) {
-                throw new Error('Could not find a different movie to swap in.');
-            }
-
-            if (keepLeft) {
-                setMovies([movieToKeep, replacementMovie]);
-            } else {
-                setMovies([replacementMovie, movieToKeep]);
-            }
-
-            setScore((currentScore) => currentScore + 1);
-            setStatusMessage(`${movieToKeep.title} stayed. A new challenger just swapped in.`);
         } catch (error) {
             console.error('Failed to swap HiLo movie:', error);
             setErrorMessage('Could not swap in a new movie right now.');
@@ -626,6 +790,7 @@ const Hilo = () => {
                         <span>{movie.runtimeSeconds ? `${Math.round(movie.runtimeSeconds / 60)} min` : 'Runtime n/a'}</span>
                     </div>
                     <Card.Title className="hilo-movie-title">{movie.title}</Card.Title>
+                    <p className="mb-3 text-muted">Choose the movie you think has the higher hidden IMDb vote count.</p>
                    
                     {/*button keeps this movie on screen + swaps the other card */}
                     <Button
@@ -634,7 +799,7 @@ const Hilo = () => {
                         disabled={isLoading}
                         onClick={() => handleKeepMovie(variant)}
                     >
-                        keep this movie :p
+                        Higher votes
                     </Button>
                 </Card.Body>
             </Card>
@@ -656,7 +821,7 @@ const Hilo = () => {
                             <p className="hilo-eyebrow">Movie duel</p>
                             <h1 className="hilo-title">HiLo</h1>
                             <p className="hilo-subtitle">
-                                Pick a movie to keep on screen and the other one will swap out. 
+                                Pick the movie you think has more IMDb votes. Fast correct guesses are worth more points, every 10 points becomes 1 coin, and one wrong answer ends the run.
                             </p>
                         </div>
 
@@ -664,6 +829,22 @@ const Hilo = () => {
                             <div className="hilo-score-pill">
                                 <span className="hilo-score-label">Score</span>
                                 <strong>{score}</strong>
+                            </div>
+                            <div className="hilo-score-pill">
+                                <span className="hilo-score-label">Coins</span>
+                                <strong>{coins}</strong>
+                            </div>
+                            <div className="hilo-score-pill">
+                                <span className="hilo-score-label">Streak</span>
+                                <strong>{streak}</strong>
+                            </div>
+                            <div className="hilo-score-pill">
+                                <span className="hilo-score-label">Best streak</span>
+                                <strong>{bestStreak}</strong>
+                            </div>
+                            <div className="hilo-score-pill">
+                                <span className="hilo-score-label">Rounds won</span>
+                                <strong>{roundsWon}</strong>
                             </div>
                             <div className="hilo-score-pill">
                                 <span className="hilo-score-label">High score</span>
@@ -674,7 +855,7 @@ const Hilo = () => {
 
                     {/* this shows loading text / prompts / errors  */}
                     <div className={`hilo-status-banner ${errorMessage ? 'hilo-status-banner-error' : ''}`}>
-                        {isLoading ? 'Loading a fresh matchup...' : statusMessage}
+                        {isLoading ? 'Updating the matchup...' : statusMessage}
                     </div>
 
 
@@ -686,12 +867,12 @@ const Hilo = () => {
 
                                 <h2>Ready for the first matchup?</h2>
                                 <p>
-                                    Start the game to pull two movie posters and guess which one earned more at the box office. It&apos;s a fun way to test your movie knowledge and discover new films along the way.
+                                    Start a run to compare two movie posters at a time. Pick the one you think has more IMDb votes, build your streak, and rack up score before one wrong guess ends the run.
                                 </p>
                                 <div className="hilo-feature-row">
                                     <span>Live movie posters</span>
-                                    <span>Fast reshuffle</span>
-                                    <span>Score tracking</span>
+                                    <span>Time-based score</span>
+                                    <span>Coin rewards</span>
                                 </div>
                             </div>
 
@@ -728,9 +909,6 @@ const Hilo = () => {
 
                             {/* buttons for new matchup / end game */}
                             <div className="hilo-actions">
-                                <Button className="hilo-secondary-button" onClick={loadMovieMatchup} disabled={isLoading}>
-                                    New Matchup
-                                </Button>
                                 <Button variant="outline-light" className="hilo-end-button" onClick={handleEndGame}>
                                     End Game
                                 </Button>
@@ -744,4 +922,3 @@ const Hilo = () => {
 };
 
 export default Hilo;
-

@@ -68,6 +68,7 @@ router.put("/:username", upload.single("avatar"), async (req, res) => {
     lastName,
     email,
     bio,
+    coinsDelta,
     currentPassword,
     newPassword
   } = req.body;
@@ -78,6 +79,7 @@ router.put("/:username", upload.single("avatar"), async (req, res) => {
   console.log("Last Name:", lastName);
   console.log("Email:", email);
   console.log("Bio:", bio);
+  console.log("Coins Delta:", coinsDelta);
   console.log("Current Password Provided:", !!currentPassword);
   console.log("New Password Provided:", !!newPassword);
   console.log("File received:", req.file);
@@ -141,6 +143,18 @@ router.put("/:username", upload.single("avatar"), async (req, res) => {
     // update profile info
     if (bio !== undefined) {
       userProfile.bio = bio;
+    }
+
+    if (coinsDelta !== undefined) {
+      const parsedCoinsDelta = Number(coinsDelta);
+
+      if (Number.isNaN(parsedCoinsDelta) || parsedCoinsDelta < 0) {
+        return res.status(400).json({
+          message: "coinsDelta must be a non-negative number"
+        });
+      }
+
+      userProfile.coins += parsedCoinsDelta;
     }
 
     // save uploaded avatar path if file was uploaded

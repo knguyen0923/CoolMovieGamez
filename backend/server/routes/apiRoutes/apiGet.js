@@ -4,8 +4,7 @@ const apiData = require('../../models/apiModel');
 
 //mounted to base url .../api
 router.get('/get', async (req, res) => {
-
-    movieid = req.params.movieid
+    const movieid = req.params.movieid;
 
     try {   
         const movies = await apiData.aggregate([
