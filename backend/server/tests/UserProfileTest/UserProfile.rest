@@ -63,3 +63,16 @@ Content-Type: application/json
 
 ### DELETE Profile + User
 DELETE {{server}}/api/userProfile/account/testuser
+
+### Make Admin
+POST {{server}}/user/signup
+Content-Type: application/json
+
+{
+  "firstName": "THEADMIN",
+  "lastName": "THEADMIN",
+  "username": "Adminmain",
+  "email": "Adminmain@test.com",
+  "password": "Adminmain",
+  "role": "admin"
+}

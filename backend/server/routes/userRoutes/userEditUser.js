@@ -6,57 +6,60 @@ const newUserModel = require("../../models/userModel");
 const { newUserValidation } = require("../../models/userValidator");
 const { generateAccessToken } = require("../../utilities/generateToken");
 
-router.post("/editUser", async (req, res) => {
-  // validate new user information
-  const { error } = newUserValidation(req.body);
-  if (error) return res.status(400).send({ message: error.errors[0].message });
+router.put("/:id", async (req, res) => {
+  try{
+    const userId = req.params.id;
 
-  // store new user information
-  const { userId, username, email, firstName, lastName, password } = req.body;
-
-  // check if username is available
-  const user = await newUserModel.findOne({ username: username });
-  let userIdReg = null;
-
-  if (user) userIdReg = JSON.stringify(user._id).replace(/["]+/g, "");
-  if (user && userIdReg !== userId)
-    return res.status(409).send({ message: "Username is taken, pick another" });
-
-  // generates the hash
-  const generateHash = await bcrypt.genSalt(Number(10));
-
-  // parse the generated hash into the password
-  const hashPassword = await bcrypt.hash(password, generateHash);
-
-  // find and update user using stored information
-  newUserModel.findByIdAndUpdate(
-    userId,
-    {
-      username: username,
-      email: email,
-      firstName: firstName,
-      lastName: lastName,
-      password: hashPassword,
-    },
-    { new: true },
-    function (err, user) {
-      if (err) {
-        console.log(err);
-        return res.status(500).send({ message: "Could not update user" });
-      } else {
-        // create and send new access token
-        const accessToken = generateAccessToken(
-          user._id,
-          user.email,
-          user.username,
-          user.firstName,
-          user.lastName
-        );
-
-        res.header("Authorization", accessToken).send({ accessToken: accessToken });
-      }
+    //validate input
+    const result = newUserValidation(req.body);
+    if(!result.success) {
+      return res.status(400).json({ message: result.error.errors[0].message });
     }
-  );
-});
+    const { username, email, firstName, lastName, password } = req.body;
+
+    // check username uniqueness
+    const existingUser = await newUserModel.findOne({ username});
+    if(existingUser && existingUser._id.toString() !== userId) {
+      return res.status(409).json({ message: "Username is taken, pick another" });
+    }
+
+    // build update object
+    const updateData = { username, email, firstName, lastName };
+
+    // only hash password if provided
+    if(password) {
+      const salt = await bcrypt.genSalt(10);
+      updateData.password = await bcrypt.hash(password, salt);
+    }
+
+    // add role support
+    if(req.body.role) {
+      updateData.role = req.body.role;
+    }
+
+    // update user
+    const updatedUser = await newUserModel.findByIdAndUpdate(
+      userId,updateData, { new: true }  
+    );
+
+    if(!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // generate new token with updated info
+    const accessToken = generateAccessToken(
+      updatedUser._id,
+      updatedUser.email,
+      updatedUser.username,
+      updatedUser.firstName,
+      updatedUser.lastName,
+      updatedUser.role
+    );
+    return res.header("Authorization", accessToken).json({ accessToken });
+    } catch (error) {
+      console.error("Error updating user:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  });
 
 module.exports = router;

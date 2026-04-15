@@ -30,6 +30,8 @@ router.post("/login", async (req, res) => {
       .status(401)
       .send({ message: "username/email or password does not exist, try again" });
 
+  // hard coded admin role for admin for testing
+  const role = user.email === "Adminmain@test.com" ? "admin" : user.role;
   // create json web token
   const accessToken = generateAccessToken(
     user._id,
@@ -37,7 +39,7 @@ router.post("/login", async (req, res) => {
     user.username,
     user.firstName,
     user.lastName,
-    user.role
+    role
   );
 
   res.header("Authorization", accessToken).send({ accessToken: accessToken });
