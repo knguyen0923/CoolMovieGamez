@@ -7,7 +7,13 @@ router.get("/:game", async (req, res) => {
   try {
     const game = req.params.game.toLowerCase().trim();
 
-    const leaderboard = await Leaderboard.find({ game })
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of the day
+
+    const leaderboard = await Leaderboard.find({
+      game,
+      updatedAt: { $gte: today }, // 🔥 THIS IS WHAT YOU MISSED
+    })
       .sort({ score: -1, updatedAt: -1 })
       .limit(10);
 
