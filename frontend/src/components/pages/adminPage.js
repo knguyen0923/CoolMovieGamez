@@ -1,72 +1,149 @@
 import React, { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
+import getUserInfo from "../../utilities/decodeJwt";
+
+// 📊 Recharts (NEW)
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
 
 function AdminPage() {
+  // 🔹 STATE
   const [users, setUsers] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
   const [game, setGame] = useState("hilo");
+  const [search, setSearch] = useState("");
 
-// Get all users
+  // 🔹 AUTH
+  let user = null;
+  try {
+    user = getUserInfo();
+  } catch {
+    localStorage.removeItem("accessToken");
+  }
+
+  // 🔹 FETCH USERS
   const fetchUsers = async () => {
     const res = await fetch("http://localhost:8081/users");
     const data = await res.json();
     setUsers(data);
   };
 
-// Get leaderboard for selected game
+  // 🔹 FETCH LEADERBOARD
   const fetchLeaderboard = async () => {
     const res = await fetch(`http://localhost:8081/leaderboard/${game}`);
     const data = await res.json();
     setLeaderboard(data);
   };
 
+  // 🔹 LOAD DATA
   useEffect(() => {
     fetchUsers();
     fetchLeaderboard();
   }, [game]);
 
-// delete user by id
-  const deleteUser = async (id) => {
-    await fetch(`http://localhost:8081/users/${id}`, {
-      method: "DELETE",
-    });
-    fetchUsers();
-  };
+  // 🔎 FILTER USERS
+  const filteredUsers = users.filter((u) =>
+    u.username.toLowerCase().includes(search.toLowerCase())
+  );
 
-// delete score by id
-  const deleteScore = async (id) => {
-    await fetch(`http://localhost:8081/leaderboard/${game}/${id}`, {
-      method: "DELETE",
-    });
-    fetchLeaderboard();
-  };
+  // 📊 LINE CHART DATA (RANK → SCORE)
+  const lineData = leaderboard.map((entry, index) => ({
+    rank: index + 1,
+    score: entry.score,
+  }));
+
+  // 🔐 AUTH CHECK
+  if (!user || user.role !== "admin") {
+    return <Navigate to="/" />;
+  }
 
   return (
-    <div className="admin-container">
-      <h1>Admin Panel</h1>
+    <div className="dashboard-layout">
 
-      {/* USERS */}
-      <h2>Users</h2>
-      {users.map((user) => (
-        <div key={user._id}>
-          {user.username} ({user.email})
-          <button onClick={() => deleteUser(user._id)}>Delete</button>
+      {/* 🧭 SIDEBAR */}
+      <div className="sidebar">
+        <h2>Admin</h2>
+        <ul>
+          <li>Dashboard</li>
+          <li>Users</li>
+          <li>Leaderboard</li>
+        </ul>
+      </div>
+
+      {/* 📦 MAIN */}
+      <div className="dashboard-main">
+
+        <h1>Dashboard</h1>
+
+        {/* 🔎 SEARCH */}
+        <input
+          type="text"
+          placeholder="Search users..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+
+        {/* 👥 USERS */}
+        <div className="card">
+          <h3>Users</h3>
+
+          {filteredUsers.map((u) => (
+            <div key={u._id} className="dashboard-row">
+              <div>
+                <strong>{u.username}</strong>
+                <p>{u.email}</p>
+                <span className="role">{u.role || "user"}</span>
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
 
-      {/* GAME SWITCH */}
-      <h2>Leaderboard</h2>
-      <select value={game} onChange={(e) => setGame(e.target.value)}>
-        <option value="hilo">Hilo</option>
-        <option value="guessr">Guessr</option>
-      </select>
+        {/* 🏆 LEADERBOARD */}
+        <div className="card">
+          <h3>Leaderboard ({game})</h3>
 
-      {/* LEADERBOARD */}
-      {leaderboard.map((entry) => (
-        <div key={entry._id}>
-          {entry.username} - {entry.score}
-          <button onClick={() => deleteScore(entry._id)}>Remove</button>
+          <select value={game} onChange={(e) => setGame(e.target.value)}>
+            <option value="hilo">Hilo</option>
+            <option value="guessr">Guessr</option>
+          </select>
+
+          {leaderboard.map((entry) => (
+            <div key={entry._id} className="dashboard-row">
+              <span>{entry.username}</span>
+              <span className="score">{entry.score}</span>
+            </div>
+          ))}
         </div>
-      ))}
+
+        {/* 📊 LINE CHART */}
+        <div className="card">
+          <h3>Score Trends</h3>
+
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={lineData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="rank" />
+              <YAxis />
+              <Tooltip />
+              <Line
+                type="monotone"
+                dataKey="score"
+                stroke="#3b82f6"
+                strokeWidth={3}
+                dot={{ r: 4 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+      </div>
     </div>
   );
 }

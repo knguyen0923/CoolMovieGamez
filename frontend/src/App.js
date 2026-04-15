@@ -36,10 +36,15 @@ const App = () => {
 }, [darkMode]);
 
   useEffect(() => {
-    setUser(getUserInfo());
-  }, []);
-
-  
+    try {
+      const userData = getUserInfo();
+      setUser(userData);
+    } catch (err) {
+      console.error("Invalid token:", err);
+      localStorage.removeItem("accessToken");
+      setUser(null);
+    }
+}, []);
 
   return (  
    <>
