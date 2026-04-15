@@ -18,7 +18,7 @@ function AdminPage() {
   const [hiloData, setHiloData] = useState([]);
   const [guessrData, setGuessrData] = useState([]);
 
-  // 🔥 NEW CHART STATES
+  // chart states
   const [allTimeData, setAllTimeData] = useState([]);
   const [dailyData, setDailyData] = useState([]);
 
@@ -35,7 +35,7 @@ function AdminPage() {
 
   const token = localStorage.getItem("accessToken");
 
-  // ================= FETCH =================
+  // fetch users and leaderboards on mount and when game changes
   const fetchUsers = async () => {
     try {
       const res = await fetch("http://localhost:8081/users");
@@ -89,7 +89,7 @@ function AdminPage() {
     }
   };
 
-  // 🔥 NEW CHART FETCH
+  // Time tested fetch for both all-time and daily data
   const fetchChartData = async () => {
     try {
       const [allRes, dailyRes] = await Promise.all([
@@ -127,7 +127,7 @@ function AdminPage() {
     fetchChartData(); // 🔥 ADDED
   }, [game]);
 
-  // ================= ACTIONS =================
+  // Admin actions
   const toggleRole = async (u) => {
     const newRole = u.role === "admin" ? "user" : "admin";
 
@@ -158,12 +158,12 @@ function AdminPage() {
     fetchLeaderboard();
   };
 
-  // ================= FILTER =================
+  // filter users based on search
   const filteredUsers = users.filter((u) =>
     u.username?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // ================= STATS =================
+  // Stat for card display - calculates average score for given data
   const getAvg = (data) =>
     data.length > 0
       ? Math.round(
@@ -182,7 +182,7 @@ function AdminPage() {
 
   return (
     <div className="dashboard-layout">
-      {/* SIDEBAR */}
+      {/* Sidebar */}
       <div className="sidebar">
         <h2>Admin</h2>
         <ul>
@@ -192,9 +192,9 @@ function AdminPage() {
         </ul>
       </div>
 
-      {/* MAIN */}
+      {/* Main */}
       <div className="dashboard-main">
-        {/* HEADER */}
+        {/* Header */}
         <div style={{ marginBottom: 20 }}>
           <h1>
             {tab === "dashboard" && "Dashboard"}
@@ -206,7 +206,7 @@ function AdminPage() {
           </p>
         </div>
 
-        {/* ================= DASHBOARD ================= */}
+        {/* Dashboard */}
         {tab === "dashboard" && (
           <>
             <div className="stats-grid">
@@ -316,7 +316,7 @@ function AdminPage() {
           </>
         )}
 
-        {/* ================= USERS ================= */}
+        {/* Users */}
         {tab === "users" && (
           <div className="card">
             <input
@@ -366,7 +366,7 @@ function AdminPage() {
           </div>
         )}
 
-        {/* ================= LEADERBOARD ================= */}
+        {/* Leaderboard */}
         {tab === "leaderboard" && (
           <div className="card">
             <select
