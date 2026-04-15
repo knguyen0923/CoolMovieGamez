@@ -31,7 +31,11 @@ const PrivateUserProfile = () => {
     email: "",
     bio: "",
     avatarUrl: "",
-    coins: 0
+    coins: 0,
+    usernameStyle: "",
+    avatarBorder: "",
+    profileBorder: "",
+    ownedCosmetics: []
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -74,7 +78,11 @@ const PrivateUserProfile = () => {
           email: data.user?.email || "",
           bio: data.profile?.bio || "",
           avatarUrl: data.profile?.avatarUrl || "",
-          coins: data.profile?.coins || 0
+          coins: data.profile?.coins || 0,
+          usernameStyle: data.profile?.usernameStyle || "",
+          avatarBorder: data.profile?.avatarBorder || "",
+          profileBorder: data.profile?.profileBorder || "",
+          ownedCosmetics: data.profile?.ownedCosmetics || []
         });
       })
       .catch((err) => {
@@ -117,7 +125,11 @@ const PrivateUserProfile = () => {
         email: data.user?.email || profile.email,
         bio: data.profile?.bio || "",
         avatarUrl: data.profile?.avatarUrl || "",
-        coins: data.profile?.coins || 0
+        coins: data.profile?.coins || 0,
+        usernameStyle: data.profile?.usernameStyle || "",
+        avatarBorder: data.profile?.avatarBorder || "",
+        profileBorder: data.profile?.profileBorder || "",
+        ownedCosmetics: data.profile?.ownedCosmetics || profile.ownedCosmetics
       });
 
       setMessage("Profile updated");
@@ -178,6 +190,83 @@ const PrivateUserProfile = () => {
     }
   };
 
+  const handleUnequipCosmetics = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("usernameStyle", "");
+      formData.append("avatarBorder", "");
+      formData.append("profileBorder", "");
+
+      const res = await fetch(
+        `${API_BASE}/api/userProfile/${user.username}/shop`,
+        {
+          method: "PUT",
+          body: formData
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message);
+
+      setProfile((prev) => ({
+        ...prev,
+        usernameStyle: "",
+        avatarBorder: "",
+        profileBorder: ""
+      }));
+
+      setMessage("Cosmetics unequipped");
+      window.dispatchEvent(new Event("cosmeticsUpdated"));
+    } catch (err) {
+      console.error(err);
+      setMessage("Failed to unequip cosmetics");
+    }
+  };
+
+  const handleEquipCosmetics = async () => {
+    try {
+      const formData = new FormData();
+
+      if (profile.ownedCosmetics.includes("gold-avatar-border")) {
+        formData.append("avatarBorder", "gold");
+      }
+
+      if (profile.ownedCosmetics.includes("rainbow-username")) {
+        formData.append("usernameStyle", "rainbow");
+      }
+
+      if (profile.ownedCosmetics.includes("rainbow-profile-border")) {
+        formData.append("profileBorder", "rainbow");
+      }
+
+      const res = await fetch(
+        `${API_BASE}/api/userProfile/${user.username}/shop`,
+        {
+          method: "PUT",
+          body: formData
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message);
+
+      setProfile((prev) => ({
+        ...prev,
+        usernameStyle: data.profile?.usernameStyle || "",
+        avatarBorder: data.profile?.avatarBorder || "",
+        profileBorder: data.profile?.profileBorder || ""
+      }));
+
+      setMessage("Cosmetics equipped");
+      window.dispatchEvent(new Event("cosmeticsUpdated"));
+    } catch (err) {
+      console.error(err);
+      setMessage("Failed to equip cosmetics");
+    }
+  };
+
   if (!user) {
     return (
       <h2 style={{ padding: "30px", textAlign: "center" }}>
@@ -187,6 +276,14 @@ const PrivateUserProfile = () => {
   }
 
   const imageSrc = buildImageUrl(profile.avatarUrl);
+
+  const hasEquippedCosmetics =
+    profile.usernameStyle !== "" ||
+    profile.avatarBorder !== "" ||
+    profile.profileBorder !== "";
+
+  const hasOwnedCosmetics =
+    profile.ownedCosmetics && profile.ownedCosmetics.length > 0;
 
   const styles = {
     page: {
@@ -205,6 +302,24 @@ const PrivateUserProfile = () => {
       borderRadius: "10px",
       width: "400px",
       textAlign: "center",
+      border:
+        profile.profileBorder === "rainbow"
+          ? "4px solid transparent"
+          : "none",
+      backgroundImage:
+        profile.profileBorder === "rainbow"
+          ? darkMode
+            ? "linear-gradient(#1e1e1e, #1e1e1e), linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet)"
+            : "linear-gradient(white, white), linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet)"
+          : "none",
+      backgroundOrigin:
+        profile.profileBorder === "rainbow"
+          ? "border-box"
+          : "initial",
+      backgroundClip:
+        profile.profileBorder === "rainbow"
+          ? "padding-box, border-box"
+          : "initial",
       boxShadow: darkMode
         ? "0 0 12px rgba(255,255,255,0.08)"
         : "0 0 10px rgba(0,0,0,0.2)",
@@ -217,7 +332,12 @@ const PrivateUserProfile = () => {
       borderRadius: "50%",
       objectFit: "cover",
       margin: "0 auto 20px auto",
-      border: darkMode ? "3px solid #999" : "3px solid #333"
+      border:
+        profile.avatarBorder === "gold"
+          ? "4px solid gold"
+          : darkMode
+          ? "3px solid #999"
+          : "3px solid #333"
     },
     form: {
       display: "flex",
@@ -282,6 +402,13 @@ const PrivateUserProfile = () => {
       marginTop: "15px",
       fontWeight: "bold",
       color: darkMode ? "#ffffff" : "#000000"
+    },
+    rainbowUsername: {
+      background:
+        "linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet)",
+      WebkitBackgroundClip: "text",
+      WebkitTextFillColor: "transparent",
+      fontWeight: "bold"
     }
   };
 
@@ -293,8 +420,18 @@ const PrivateUserProfile = () => {
         <img src={imageSrc} alt="avatar" style={styles.avatar} />
 
         <p>
-          <strong>Username:</strong> {user.username}
+          <strong>Username:</strong>{" "}
+          <span
+            style={
+              profile.usernameStyle === "rainbow"
+                ? styles.rainbowUsername
+                : {}
+            }
+          >
+            {user.username}
+          </span>
         </p>
+
         <p>
           <strong>Coins:</strong> {profile.coins}
         </p>
@@ -392,6 +529,26 @@ const PrivateUserProfile = () => {
               Submit New Password
             </button>
           </form>
+        )}
+
+        {hasOwnedCosmetics && !hasEquippedCosmetics && (
+          <button
+            type="button"
+            onClick={handleEquipCosmetics}
+            style={styles.saveButton}
+          >
+            Equip Cosmetics
+          </button>
+        )}
+
+        {hasEquippedCosmetics && (
+          <button
+            type="button"
+            onClick={handleUnequipCosmetics}
+            style={styles.saveButton}
+          >
+            Unequip Cosmetics
+          </button>
         )}
 
         <button onClick={handleDeleteAccount} style={styles.deleteButton}>

@@ -6,9 +6,11 @@ import Nav from "react-bootstrap/Nav";
 import ReactNavbar from "react-bootstrap/Navbar";
 import { Link } from "react-router-dom";
 
-// changed to pass dark mode toggle
+const API_BASE = "http://localhost:8081";
+
 export default function Navbar({ darkMode, setDarkMode }) {
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
   const location = useLocation();
 
   useEffect(() => {
@@ -16,12 +18,106 @@ export default function Navbar({ darkMode, setDarkMode }) {
     setUser(userInfo);
   }, [location]);
 
-  // logout function
+  useEffect(() => {
+    if (!user) {
+      setProfile(null);
+      return;
+    }
+
+    fetch(`${API_BASE}/api/userProfile/${user.username}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setProfile(data.profile || null);
+      })
+      .catch((err) => {
+        console.error("Error loading navbar profile:", err);
+      });
+  }, [user, location]);
+
+  // 🔥 live cosmetic updates
+  useEffect(() => {
+    const syncCosmetics = () => {
+      const userInfo = getUserInfo();
+      if (!userInfo) return;
+
+      fetch(`${API_BASE}/api/userProfile/${userInfo.username}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setProfile(data.profile || null);
+        })
+        .catch((err) => {
+          console.error("Error syncing navbar profile:", err);
+        });
+    };
+
+    window.addEventListener("cosmeticsUpdated", syncCosmetics);
+
+    return () => {
+      window.removeEventListener("cosmeticsUpdated", syncCosmetics);
+    };
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
     setUser(null);
+    setProfile(null);
     window.location.href = "/login";
   };
+
+  const buildImageUrl = (avatarUrl) => {
+    if (!avatarUrl) return "https://via.placeholder.com/32";
+
+    if (avatarUrl.startsWith("http")) return avatarUrl;
+
+    if (avatarUrl.startsWith("/uploads/")) {
+      return `${API_BASE}${avatarUrl}`;
+    }
+
+    return `${API_BASE}/uploads/${avatarUrl}`;
+  };
+
+  const rainbowText =
+    profile?.usernameStyle === "rainbow"
+      ? {
+          background:
+            "linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          fontWeight: "bold"
+        }
+      : {};
+
+  const avatarStyle = {
+    width: "32px",
+    height: "32px",
+    borderRadius: "50%",
+    objectFit: "cover",
+    marginRight: "8px",
+    border:
+      profile?.avatarBorder === "gold"
+        ? "2px solid gold"
+        : darkMode
+        ? "2px solid #888"
+        : "2px solid #ccc"
+  };
+
+  const rainbowContainer =
+    profile?.profileBorder === "rainbow"
+      ? {
+          border: "2px solid transparent",
+          borderRadius: "10px",
+          padding: "4px 10px",
+          backgroundImage:
+            "linear-gradient(#212529, #212529), linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet)",
+          backgroundOrigin: "border-box",
+          backgroundClip: "padding-box, border-box",
+          display: "flex",
+          alignItems: "center"
+        }
+      : {
+          display: "flex",
+          alignItems: "center"
+        };
 
   return (
     <ReactNavbar bg="dark" variant="dark">
@@ -33,7 +129,6 @@ export default function Navbar({ darkMode, setDarkMode }) {
           <Nav.Link href="/guessr">Guessr</Nav.Link>
           <Nav.Link href="/leaderboard">Leaderboard</Nav.Link>
 
-          {/* only show admin link if user is admin */}
           {user?.role === "admin" && (
             <Nav.Link as={Link} to="/admin" className="text-danger fw-bold">
               Admin
@@ -42,9 +137,27 @@ export default function Navbar({ darkMode, setDarkMode }) {
 
           {user && (
             <>
-              <Nav.Link href="/privateUserProfile">
-                {user.username ? `${user.username}'s Profile` : "User Profile"}
+              {/* 🛒 Shop FIRST */}
+              <Nav.Link as={Link} to="/shop">
+                Shop
               </Nav.Link>
+
+              {/* 👤 Profile with full cosmetics */}
+              <Nav.Link href="/privateUserProfile" style={{ padding: "0" }}>
+                <div style={rainbowContainer}>
+                  <img
+                    src={buildImageUrl(profile?.avatarUrl)}
+                    alt="profile"
+                    style={avatarStyle}
+                  />
+                  <span style={rainbowText}>
+                    {user.username
+                      ? `${user.username}'s Profile`
+                      : "User Profile"}
+                  </span>
+                </div>
+              </Nav.Link>
+
               <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
             </>
           )}

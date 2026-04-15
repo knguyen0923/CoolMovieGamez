@@ -18,6 +18,7 @@ import Hilo from "./components/pages/hilo";
 import Guessr from "./components/pages/guessr";
 import LeaderboardPage from "./components/pages/leaderboardPage";
 import AdminPage from "./components/pages/adminPage";
+import ShopPage from "./components/pages/shopPage";
 
 export const UserContext = createContext();
 //test change
@@ -62,6 +63,7 @@ const App = () => {
           <Route path="/hilo" element={<Hilo />} />
           <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/shop" element={<ShopPage />} />
         </Routes>
       </UserContext.Provider> 
     </div>

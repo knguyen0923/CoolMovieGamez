@@ -195,6 +195,70 @@ router.put("/:username", upload.single("avatar"), async (req, res) => {
   }
 });
 
+// SHOP PURCHASE / EQUIP ROUTE
+router.put("/:username/shop", upload.none(), async (req, res) => {
+  const name = req.params.username;
+  const {
+    coins,
+    usernameStyle,
+    avatarBorder,
+    profileBorder,
+    ownedCosmetics
+  } = req.body;
+
+  try {
+    let userProfile = await UserProfile.findOne({ username: name });
+
+    if (!userProfile) {
+      userProfile = await UserProfile.create({ username: name });
+    }
+
+    if (coins !== undefined) {
+      userProfile.coins = Number(coins);
+    }
+
+    if (usernameStyle !== undefined) {
+      userProfile.usernameStyle = usernameStyle;
+    }
+
+    if (avatarBorder !== undefined) {
+      userProfile.avatarBorder = avatarBorder;
+    }
+
+    if (profileBorder !== undefined) {
+      userProfile.profileBorder = profileBorder;
+    }
+
+    if (ownedCosmetics !== undefined) {
+      try {
+        const parsed = JSON.parse(ownedCosmetics);
+
+        // only update if valid array
+        if (Array.isArray(parsed)) {
+          userProfile.ownedCosmetics = parsed;
+        }
+      } catch (err) {
+        console.error("Invalid ownedCosmetics format");
+      }
+    }
+
+    userProfile.updatedAt = new Date();
+
+    await userProfile.save();
+
+    return res.json({
+      message: "Shop item applied",
+      profile: userProfile
+    });
+  } catch (error) {
+    console.error("SHOP UPDATE ERROR:", error);
+
+    return res.status(500).json({
+      message: "Server error"
+    });
+  }
+});
+
 // DELETE entire user account
 router.delete("/account/:username", async (req, res) => {
   const name = req.params.username;
