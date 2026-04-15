@@ -6,7 +6,7 @@ import Form from "react-bootstrap/Form";
 
 const PRIMARY_COLOR = "#cc5c99";
 const SECONDARY_COLOR = "#0c0c1f";
-const url = "http://localhost:8081/user/signup";
+const url = "http://localhost:8081/users/signup";
 
 const Register = () => {
   const [data, setData] = useState({
@@ -16,6 +16,8 @@ const Register = () => {
     email: "",
     password: "",
   });
+
+  const [focusedField, setFocusedField] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const [light, setLight] = useState(false);
@@ -36,6 +38,10 @@ const Register = () => {
     }
   }, [light]);
 
+  const usernameValid = data.username.length >= 6;
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email);
+  const passwordValid = data.password.trim().length >= 8;
+
   let labelStyling = {
     color: PRIMARY_COLOR,
     fontWeight: "bold",
@@ -48,6 +54,26 @@ const Register = () => {
     background: PRIMARY_COLOR,
     borderStyle: "none",
     color: bgColor,
+  };
+
+  const helperBoxStyle = {
+    background: light ? "#f8f9fa" : "#1b1b35",
+    color: light ? "#333" : "#f1f1f1",
+    padding: "8px 10px",
+    borderRadius: "8px",
+    marginTop: "6px",
+    fontSize: "13px",
+    border: `1px solid ${PRIMARY_COLOR}`,
+  };
+
+  const validStyle = {
+    color: "green",
+    fontWeight: "bold",
+  };
+
+  const invalidStyle = {
+    color: "red",
+    fontWeight: "bold",
   };
 
   const handleSubmit = async (e) => {
@@ -90,12 +116,16 @@ const Register = () => {
                     name="firstName"
                     value={data.firstName}
                     onChange={handleChange}
+                    onFocus={() => setFocusedField("firstName")}
+                    onBlur={() => setFocusedField("")}
                     placeholder="Enter first name"
                     required
                   />
-                  <Form.Text className="text-muted">
-                    Enter your first name
-                  </Form.Text>
+                  {focusedField === "firstName" && (
+                    <div style={helperBoxStyle}>
+                      First name is required.
+                    </div>
+                  )}
                 </Form.Group>
 
                 <Form.Group className="mb-3" controlId="formBasicLastName">
@@ -105,12 +135,16 @@ const Register = () => {
                     name="lastName"
                     value={data.lastName}
                     onChange={handleChange}
+                    onFocus={() => setFocusedField("lastName")}
+                    onBlur={() => setFocusedField("")}
                     placeholder="Enter last name"
                     required
                   />
-                  <Form.Text className="text-muted">
-                    Enter your last name
-                  </Form.Text>
+                  {focusedField === "lastName" && (
+                    <div style={helperBoxStyle}>
+                      Last name is required.
+                    </div>
+                  )}
                 </Form.Group>
 
                 <Form.Group className="mb-3" controlId="formBasicUsername">
@@ -120,12 +154,24 @@ const Register = () => {
                     name="username"
                     value={data.username}
                     onChange={handleChange}
+                    onFocus={() => setFocusedField("username")}
+                    onBlur={() => setFocusedField("")}
                     placeholder="Enter username"
                     required
                   />
-                  <Form.Text className="text-muted">
-                    Enter a username
-                  </Form.Text>
+                  {focusedField === "username" && (
+                    <div style={helperBoxStyle}>
+                      <div>
+                        Username length:{" "}
+                        <span style={usernameValid ? validStyle : invalidStyle}>
+                          {data.username.length} characters
+                        </span>
+                      </div>
+                      <div>
+                        Must be at least 6 characters.
+                      </div>
+                    </div>
+                  )}
                 </Form.Group>
 
                 <Form.Group className="mb-3" controlId="formBasicEmail">
@@ -135,12 +181,34 @@ const Register = () => {
                     name="email"
                     value={data.email}
                     onChange={handleChange}
+                    onFocus={() => setFocusedField("email")}
+                    onBlur={() => setFocusedField("")}
                     placeholder="Enter email"
                     required
                   />
-                  <Form.Text className="text-muted">
-                    Enter your email
-                  </Form.Text>
+                  {focusedField === "email" && (
+                    <div style={helperBoxStyle}>
+                      <div>
+                        Enter a valid email address like: name@example.com
+                      </div>
+                      <div>
+                        Status:{" "}
+                        <span
+                          style={
+                            data.email.length === 0 || emailValid
+                              ? validStyle
+                              : invalidStyle
+                          }
+                        >
+                          {data.email.length === 0
+                            ? "waiting for input"
+                            : emailValid
+                            ? "valid email format"
+                            : "invalid email format"}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </Form.Group>
 
                 <Form.Group className="mb-3" controlId="formBasicPassword">
@@ -151,8 +219,20 @@ const Register = () => {
                     value={data.password}
                     placeholder="Password"
                     onChange={handleChange}
+                    onFocus={() => setFocusedField("password")}
+                    onBlur={() => setFocusedField("")}
                     required
                   />
+                  {focusedField === "password" && (
+                    <div style={helperBoxStyle}>
+                      <div>
+                        Must be 8 characters or more:{" "}
+                        <span style={passwordValid ? validStyle : invalidStyle}>
+                          {passwordValid ? "valid" : "not valid"}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </Form.Group>
 
                 <Form.Group className="mb-3" controlId="formBasicCheckbox">

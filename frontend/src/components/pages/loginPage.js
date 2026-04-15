@@ -12,11 +12,15 @@ const url = "http://localhost:8081/users/login";
 const Login = () => {
   const [user, setUser] = useState(null);
   const [data, setData] = useState({ username: "", password: "" });
+  const [focusedField, setFocusedField] = useState("");
   const [error, setError] = useState("");
   const [light, setLight] = useState(false);
   const [bgColor, setBgColor] = useState(SECONDARY_COLOR);
   const [bgText, setBgText] = useState("Light Mode");
   const navigate = useNavigate();
+
+  const usernameValid = data.username.trim().length >= 1;
+  const passwordValid = data.password.trim().length >= 8;
 
   let labelStyling = {
     color: PRIMARY_COLOR,
@@ -30,6 +34,26 @@ const Login = () => {
     background: PRIMARY_COLOR,
     borderStyle: "none",
     color: bgColor,
+  };
+
+  const helperBoxStyle = {
+    background: light ? "#f8f9fa" : "#1b1b35",
+    color: light ? "#333" : "#f1f1f1",
+    padding: "8px 10px",
+    borderRadius: "8px",
+    marginTop: "6px",
+    fontSize: "13px",
+    border: `1px solid ${PRIMARY_COLOR}`,
+  };
+
+  const validStyle = {
+    color: "green",
+    fontWeight: "bold",
+  };
+
+  const invalidStyle = {
+    color: "red",
+    fontWeight: "bold",
   };
 
   const handleChange = ({ currentTarget: input }) => {
@@ -100,11 +124,24 @@ const Login = () => {
                     name="username"
                     value={data.username}
                     onChange={handleChange}
+                    onFocus={() => setFocusedField("username")}
+                    onBlur={() => setFocusedField("")}
                     placeholder="Enter username or email"
+                    required
                   />
-                  <Form.Text className="text-muted">
-                    Enter your username or email to log in
-                  </Form.Text>
+                  {focusedField === "username" && (
+                    <div style={helperBoxStyle}>
+                      <div>
+                        Enter your username or your email address.
+                      </div>
+                      <div>
+                        Status:{" "}
+                        <span style={usernameValid ? validStyle : invalidStyle}>
+                          {usernameValid ? "valid" : "required"}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </Form.Group>
 
                 <Form.Group className="mb-3" controlId="formBasicPassword">
@@ -115,7 +152,23 @@ const Login = () => {
                     value={data.password}
                     placeholder="Password"
                     onChange={handleChange}
+                    onFocus={() => setFocusedField("password")}
+                    onBlur={() => setFocusedField("")}
+                    required
                   />
+                  {focusedField === "password" && (
+                    <div style={helperBoxStyle}>
+                      <div>
+                        Password must be 8 characters or more.
+                      </div>
+                      <div>
+                        Status:{" "}
+                        <span style={passwordValid ? validStyle : invalidStyle}>
+                          {passwordValid ? "valid" : "not valid"}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </Form.Group>
 
                 <Form.Group className="mb-3" controlId="formBasicCheckbox">
