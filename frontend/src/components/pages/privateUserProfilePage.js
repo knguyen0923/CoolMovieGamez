@@ -6,6 +6,12 @@ const API_BASE = "http://localhost:8081";
 const buildImageUrl = (avatarUrl) => {
   if (!avatarUrl) return "https://via.placeholder.com/150";
 
+  // supports S3 URLs
+  if (avatarUrl.startsWith("http")) {
+    return avatarUrl;
+  }
+
+  // supports old local uploads
   if (avatarUrl.startsWith("/uploads/")) {
     return `${API_BASE}${avatarUrl}`;
   }
@@ -154,9 +160,12 @@ const PrivateUserProfile = () => {
   const handleDeleteAccount = async () => {
     if (!window.confirm("Delete account permanently?")) return;
 
-    const res = await fetch(`${API_BASE}/api/userProfile/account/${user.username}`, {
-      method: "DELETE"
-    });
+    const res = await fetch(
+      `${API_BASE}/api/userProfile/account/${user.username}`,
+      {
+        method: "DELETE"
+      }
+    );
 
     const data = await res.json();
 
@@ -170,7 +179,11 @@ const PrivateUserProfile = () => {
   };
 
   if (!user) {
-    return <h2 style={{ padding: "30px", textAlign: "center" }}>Please log in first.</h2>;
+    return (
+      <h2 style={{ padding: "30px", textAlign: "center" }}>
+        Please log in first.
+      </h2>
+    );
   }
 
   const imageSrc = buildImageUrl(profile.avatarUrl);
@@ -279,15 +292,25 @@ const PrivateUserProfile = () => {
 
         <img src={imageSrc} alt="avatar" style={styles.avatar} />
 
-        <p><strong>Username:</strong> {user.username}</p>
-        <p><strong>Coins:</strong> {profile.coins}</p>
+        <p>
+          <strong>Username:</strong> {user.username}
+        </p>
+        <p>
+          <strong>Coins:</strong> {profile.coins}
+        </p>
 
-        <form onSubmit={handleSubmit} style={styles.form} encType="multipart/form-data">
+        <form
+          onSubmit={handleSubmit}
+          style={styles.form}
+          encType="multipart/form-data"
+        >
           <label style={styles.label}>First Name</label>
           <input
             type="text"
             value={profile.firstName}
-            onChange={(e) => setProfile({ ...profile, firstName: e.target.value })}
+            onChange={(e) =>
+              setProfile({ ...profile, firstName: e.target.value })
+            }
             style={styles.input}
           />
 
@@ -295,7 +318,9 @@ const PrivateUserProfile = () => {
           <input
             type="text"
             value={profile.lastName}
-            onChange={(e) => setProfile({ ...profile, lastName: e.target.value })}
+            onChange={(e) =>
+              setProfile({ ...profile, lastName: e.target.value })
+            }
             style={styles.input}
           />
 
@@ -307,7 +332,7 @@ const PrivateUserProfile = () => {
             style={styles.input}
           />
 
-          <label style={styles.label}>Upload Profile Picture</label>
+          <label style={styles.label}>Change / Upload Profile Picture</label>
           <input
             type="file"
             accept="image/*"

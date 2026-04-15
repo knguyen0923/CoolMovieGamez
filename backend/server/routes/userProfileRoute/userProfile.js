@@ -3,30 +3,17 @@ const router = express.Router();
 const User = require("../../models/userModel");
 const UserProfile = require("../../models/UserProfile");
 const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
 const bcrypt = require("bcrypt");
+const {
+  PutObjectCommand,
+  DeleteObjectCommand
+} = require("@aws-sdk/client-s3");
+const { v4: uuidv4 } = require("uuid");
+const s3 = require("../../config/s3");
 
-// make sure uploads folder exists
-const uploadFolder = path.join(__dirname, "../../uploads");
-
-if (!fs.existsSync(uploadFolder)) {
-  fs.mkdirSync(uploadFolder, { recursive: true });
-}
-
-// multer setup for avatar uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadFolder);
-  },
-  filename: function (req, file, cb) {
-    const uniqueName =
-      Date.now() + "-" + file.originalname.replace(/\s+/g, "_");
-    cb(null, uniqueName);
-  }
+const upload = multer({
+  storage: multer.memoryStorage()
 });
-
-const upload = multer({ storage: storage });
 
 // GET user profile info
 router.get("/:username", async (req, res) => {
@@ -68,7 +55,6 @@ router.put("/:username", upload.single("avatar"), async (req, res) => {
     lastName,
     email,
     bio,
-    coinsDelta,
     currentPassword,
     newPassword
   } = req.body;
@@ -79,7 +65,6 @@ router.put("/:username", upload.single("avatar"), async (req, res) => {
   console.log("Last Name:", lastName);
   console.log("Email:", email);
   console.log("Bio:", bio);
-  console.log("Coins Delta:", coinsDelta);
   console.log("Current Password Provided:", !!currentPassword);
   console.log("New Password Provided:", !!newPassword);
   console.log("File received:", req.file);
@@ -145,22 +130,49 @@ router.put("/:username", upload.single("avatar"), async (req, res) => {
       userProfile.bio = bio;
     }
 
-    if (coinsDelta !== undefined) {
-      const parsedCoinsDelta = Number(coinsDelta);
+    // upload avatar to S3
+    if (req.file) {
+      // delete old image from S3 if it exists
+      if (
+        userProfile.avatarUrl &&
+        userProfile.avatarUrl.includes("amazonaws.com")
+      ) {
+        const oldKey = userProfile.avatarUrl.split(".amazonaws.com/")[1];
 
-      if (Number.isNaN(parsedCoinsDelta) || parsedCoinsDelta < 0) {
-        return res.status(400).json({
-          message: "coinsDelta must be a non-negative number"
-        });
+        if (oldKey) {
+          try {
+            await s3.send(
+              new DeleteObjectCommand({
+                Bucket: process.env.AWS_S3_BUCKET_NAME,
+                Key: oldKey
+              })
+            );
+            console.log("Deleted old avatar:", oldKey);
+          } catch (err) {
+            console.error("Error deleting old avatar:", err);
+          }
+        }
       }
 
-      userProfile.coins += parsedCoinsDelta;
-    }
+      const originalName = req.file.originalname || "avatar";
+      const extension = originalName.includes(".")
+        ? originalName.substring(originalName.lastIndexOf("."))
+        : "";
 
-    // save uploaded avatar path if file was uploaded
-    if (req.file) {
-      console.log("Saving avatar file:", req.file.filename);
-      userProfile.avatarUrl = `/uploads/${req.file.filename}`;
+      const fileKey = `avatars/${name}-${uuidv4()}${extension}`;
+
+      await s3.send(
+        new PutObjectCommand({
+          Bucket: process.env.AWS_S3_BUCKET_NAME,
+          Key: fileKey,
+          Body: req.file.buffer,
+          ContentType: req.file.mimetype
+        })
+      );
+
+      userProfile.avatarUrl = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
+
+      console.log("Saved avatar to S3:", userProfile.avatarUrl);
     } else {
       console.log("No file received by multer");
     }
@@ -194,6 +206,31 @@ router.delete("/account/:username", async (req, res) => {
       return res.status(404).json({
         message: "User not found"
       });
+    }
+
+    // delete avatar from S3 too
+    const existingProfile = await UserProfile.findOne({ username: name });
+
+    if (
+      existingProfile &&
+      existingProfile.avatarUrl &&
+      existingProfile.avatarUrl.includes("amazonaws.com")
+    ) {
+      const oldKey = existingProfile.avatarUrl.split(".amazonaws.com/")[1];
+
+      if (oldKey) {
+        try {
+          await s3.send(
+            new DeleteObjectCommand({
+              Bucket: process.env.AWS_S3_BUCKET_NAME,
+              Key: oldKey
+            })
+          );
+          console.log("Deleted avatar on account delete:", oldKey);
+        } catch (err) {
+          console.error("Error deleting avatar on account delete:", err);
+        }
+      }
     }
 
     await UserProfile.findOneAndDelete({ username: name });
