@@ -44,12 +44,12 @@ app.use(express.urlencoded({ extended: true }))
 // lets frontend load uploaded images
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-app.use('/user', loginRoute)
-app.use('/user', registerRoute)
-app.use('/user', getAllUsersRoute)
-app.use('/user', getUserByIdRoute)
-app.use('/user', editUser)
-app.use('/user', deleteUser)
+app.use('/users', loginRoute)
+app.use('/users', registerRoute)
+app.use('/users', getAllUsersRoute)
+app.use('/users', getUserByIdRoute)
+app.use('/users', editUser)
+app.use('/users', deleteUser)
 
 //Guessr routes
 app.use('/guessr', guessrCreateRoute)
