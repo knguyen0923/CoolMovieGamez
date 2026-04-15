@@ -15,6 +15,9 @@ const buildImageUrl = (avatarUrl) => {
 
 const PrivateUserProfile = () => {
   const user = useContext(UserContext);
+  const [darkMode, setDarkMode] = useState(
+    localStorage.getItem("darkMode") === "true"
+  );
 
   const [profile, setProfile] = useState({
     firstName: "",
@@ -33,6 +36,21 @@ const PrivateUserProfile = () => {
   const [showPasswordSection, setShowPasswordSection] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    const syncDarkMode = () => {
+      setDarkMode(localStorage.getItem("darkMode") === "true");
+    };
+
+    window.addEventListener("storage", syncDarkMode);
+
+    const interval = setInterval(syncDarkMode, 200);
+
+    return () => {
+      window.removeEventListener("storage", syncDarkMode);
+      clearInterval(interval);
+    };
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -157,6 +175,103 @@ const PrivateUserProfile = () => {
 
   const imageSrc = buildImageUrl(profile.avatarUrl);
 
+  const styles = {
+    page: {
+      minHeight: "100vh",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: darkMode ? "#121212" : "#f4f4f4",
+      color: darkMode ? "#ffffff" : "#000000",
+      transition: "all 0.3s ease"
+    },
+    card: {
+      background: darkMode ? "#1e1e1e" : "white",
+      color: darkMode ? "#ffffff" : "#000000",
+      padding: "30px",
+      borderRadius: "10px",
+      width: "400px",
+      textAlign: "center",
+      boxShadow: darkMode
+        ? "0 0 12px rgba(255,255,255,0.08)"
+        : "0 0 10px rgba(0,0,0,0.2)",
+      transition: "all 0.3s ease"
+    },
+    avatar: {
+      display: "block",
+      width: "150px",
+      height: "150px",
+      borderRadius: "50%",
+      objectFit: "cover",
+      margin: "0 auto 20px auto",
+      border: darkMode ? "3px solid #999" : "3px solid #333"
+    },
+    form: {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: "12px",
+      marginTop: "15px"
+    },
+    label: {
+      fontWeight: "bold",
+      textAlign: "center",
+      color: darkMode ? "#ffffff" : "#000000"
+    },
+    input: {
+      padding: "10px",
+      border: darkMode ? "1px solid #555" : "1px solid #ccc",
+      borderRadius: "6px",
+      width: "100%",
+      maxWidth: "300px",
+      textAlign: "center",
+      backgroundColor: darkMode ? "#2a2a2a" : "#ffffff",
+      color: darkMode ? "#ffffff" : "#000000"
+    },
+    fileInput: {
+      width: "100%",
+      maxWidth: "300px",
+      textAlign: "center",
+      color: darkMode ? "#ffffff" : "#000000"
+    },
+    textarea: {
+      padding: "10px",
+      minHeight: "80px",
+      border: darkMode ? "1px solid #555" : "1px solid #ccc",
+      borderRadius: "6px",
+      width: "100%",
+      maxWidth: "300px",
+      textAlign: "center",
+      backgroundColor: darkMode ? "#2a2a2a" : "#ffffff",
+      color: darkMode ? "#ffffff" : "#000000"
+    },
+    saveButton: {
+      background: darkMode ? "#2f2f2f" : "black",
+      color: "white",
+      padding: "10px",
+      border: "none",
+      marginTop: "10px",
+      borderRadius: "6px",
+      width: "200px",
+      cursor: "pointer"
+    },
+    deleteButton: {
+      background: darkMode ? "#8b0000" : "darkred",
+      color: "white",
+      padding: "10px",
+      border: "none",
+      marginTop: "15px",
+      borderRadius: "6px",
+      width: "200px",
+      cursor: "pointer"
+    },
+    message: {
+      marginTop: "15px",
+      fontWeight: "bold",
+      color: darkMode ? "#ffffff" : "#000000"
+    }
+  };
+
   return (
     <div style={styles.page}>
       <div style={styles.card}>
@@ -262,90 +377,6 @@ const PrivateUserProfile = () => {
       </div>
     </div>
   );
-};
-
-const styles = {
-  page: {
-    minHeight: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f4f4f4"
-  },
-  card: {
-    background: "white",
-    padding: "30px",
-    borderRadius: "10px",
-    width: "400px",
-    textAlign: "center",
-    boxShadow: "0 0 10px rgba(0,0,0,0.2)"
-  },
-  avatar: {
-    display: "block",
-    width: "150px",
-    height: "150px",
-    borderRadius: "50%",
-    objectFit: "cover",
-    margin: "0 auto 20px auto",
-    border: "3px solid #333"
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "12px",
-    marginTop: "15px"
-  },
-  label: {
-    fontWeight: "bold",
-    textAlign: "center"
-  },
-  input: {
-    padding: "10px",
-    border: "1px solid #ccc",
-    borderRadius: "6px",
-    width: "100%",
-    maxWidth: "300px",
-    textAlign: "center"
-  },
-  fileInput: {
-    width: "100%",
-    maxWidth: "300px",
-    textAlign: "center"
-  },
-  textarea: {
-    padding: "10px",
-    minHeight: "80px",
-    border: "1px solid #ccc",
-    borderRadius: "6px",
-    width: "100%",
-    maxWidth: "300px",
-    textAlign: "center"
-  },
-  saveButton: {
-    background: "black",
-    color: "white",
-    padding: "10px",
-    border: "none",
-    marginTop: "10px",
-    borderRadius: "6px",
-    width: "200px",
-    cursor: "pointer"
-  },
-  deleteButton: {
-    background: "darkred",
-    color: "white",
-    padding: "10px",
-    border: "none",
-    marginTop: "15px",
-    borderRadius: "6px",
-    width: "200px",
-    cursor: "pointer"
-  },
-  message: {
-    marginTop: "15px",
-    fontWeight: "bold"
-  }
 };
 
 export default PrivateUserProfile;
