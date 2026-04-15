@@ -7,9 +7,12 @@ const bcrypt = require("bcrypt");
 const { generateAccessToken } = require("../../utilities/generateToken");
 
 router.post("/login", async (req, res) => {
-  const { error } = userLoginValidation(req.body);
-  if (error) return res.status(400).send({ message: error.errors[0].message });
-
+  const result = userLoginValidation(req.body);
+if (!result.success) {
+  return res.status(400).send({
+    message: result.error.issues[0].message
+  });
+}
   const { username, password } = req.body;
 
   const user = await newUserModel.findOne({
