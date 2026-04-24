@@ -1,25 +1,24 @@
 const express = require("express");
 const router = express.Router();
 const movies = require('../../models/apiModel');
-//const score = require('../../models/leaderboardModel');
-//const coins = require('../../models/userProfile');
 const fetch = require("node-fetch");
+const rounds = new Map(); // In-memory store for active rounds
 
-const OpenAI = require("openai");
 const { GoogleGenAI } = require("@google/genai");
+const { FOR_THE_MAP_API } = process.env;
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY
 });
 
-//searches nominatim for city name, returns coordinates
+//~~~~~~~~~~~~~~~~~searches nominatim for city name, returns coordinates
 async function getCoordinates(cityName) {
     console.log("Getting coordinates for city:", cityName);
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}`;
 
     const res = await fetch(url, {
               headers: {
-            "User-Agent": "CoolMovieGamez/1.0 (s0395343@salemstate.edu)"
+            "User-Agent": FOR_THE_MAP_API
         }
     });
     const data = await res.json();
@@ -34,7 +33,7 @@ async function getCoordinates(cityName) {
     };
 }
 
-//calculates distance for coordinates for scoring
+//~~~~~~~~~~~~~~~~~~~~calculates distance for coordinates for scoring
 function haversineDistance(lat1, lon1, lat2, lon2) {
   const R = 6371; // Earth radius in km
 
@@ -54,93 +53,184 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
   return R * c; // distance in km
 }
 
-let currentAnswer = null;
-let actualCity = null;
+//~~~~~~~~~~~~~~updates leaderboard and coins on game complete~~~~~~~~~~~~~~`
+async function submitElsewhere(username, score, coins) {
 
+  await fetch('http://localhost:8081/leaderboard/guessr', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      game: "guessr",
+      username,
+      score,
+    })
+  });
+
+  await fetch(`http://localhost:8081/api/userProfile/${username}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      coinsDelta: coins,
+    })
+  });
+
+}
+
+//~~~~~~~~~~~~~~~~~generates new round, checks if answers are valid, max retries 5
+async function generateValidRound(maxRetries = 3) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const movie = await movies.aggregate([{ $sample: { size: 1 } }]);
+      const selectedmovie = movie[0]?.title;
+
+      if (!selectedmovie) continue;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash-lite",
+        contents: `Name ONE major city where the movie "${selectedmovie}" is primarily set. 
+                  Respond with ONLY the city name. If fictional, choose the closest real-world 
+                  equivalent. No extra text.`      
+      });
+
+      const location = response.text?.trim();
+
+      if (!location || !/^[a-zA-Z\s]+$/.test(location) || location.length > 40) continue;
+
+      const truecoords = await getCoordinates(location);
+      
+      console.log("Generated round:", { movie: selectedmovie, location, truecoords, location });
+
+      return {
+        movie: selectedmovie,
+        poster: movie[0].poster,
+        coords: truecoords,
+        city: location
+      };
+
+    } catch (err) {
+      console.log("Retrying round generation...", err.message);
+    }
+  }
+
+  throw new Error("Failed to generate valid round after retries");
+}
+
+//~~~~~~~~~~~~~~~~~~~creates round id, returns movie and poster to FE
 router.get("/get", async (req, res) => {
-  //get method to grab movie and location for the round
-    try {   
-        const movie = await movies.aggregate([
-            {$sample: {size: 1} }
-        ]);
+  try {
 
-        const selectedmovie = movie[0].title;
-          console.log("Selected movie:", selectedmovie);
+    const round = await generateValidRound();
 
-        if (!selectedmovie) {
-          return res.status(404).json({ message: 'No movie found :(' });
-        }
+    const roundId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-    //asking for location 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-lite",         //free
-      contents: `Where did the movie "${selectedmovie}" perform the best? Respond ONLY with the city name.`,
+    rounds.set(roundId, {
+      answer: round.coords,
+      city: round.city
     });
 
-    location = response.text?.trim();
-    console.log("AI answer:", location);
-    actualCity = location;
+    setTimeout(() => {
+      rounds.delete(roundId);
+    }, 1000 * 60); // delete after 1 minute
 
-    currentAnswer = (await getCoordinates(location)) || null;
-    console.log("Coordinates for answer:", currentAnswer);
+    res.json({
+      movie: round.movie,
+      poster: round.poster,
+      roundId
+    });
 
-        res.json({ movie: selectedmovie, poster: movie[0].poster });
-
-        } catch (error) {
-          console.error('Could not get movie:', error.response?.data || error.message || error);
-          res.status(400).json({ message: 'Failed to get movie :(' });
-      }
+  } catch (error) {
+    console.error("Round generation failed:", error);
+    res.status(500).json({ message: "Failed to generate round" });
+  }
 });
 
 //~~~~~~~~~~~~~~used for testing, returns hardcoded movie and location for design mode
 router.get("/test", async (req, res) => {
-    try {   
-        const movie = await movies.aggregate([
-            {$sample: {size: 1} }
-        ]);
-        const selectedmovie = movie[0].title;
-          console.log("Selected movie:", selectedmovie);
-        if (!selectedmovie) {
-          return res.status(404).json({ message: 'No movie found :(' });
-        }
-    location = "Los Angeles"; // Hardcoded location for testing
-    console.log("Design Mode Location:", location);
-    actualCity = location;
-    currentAnswer = (await getCoordinates(location)) || null;
-    console.log("Design Mode Answer Coordinates:", currentAnswer);
-    console.log(location);
-
-        res.json({ movie: selectedmovie, poster: movie[0].poster });
-        } catch (error) {
-          console.error('Could not get movie:', error.response?.data || error.message || error);
-          res.status(400).json({ message: 'Failed to get movie :(' });
-      }
+  try {
+    const movie = await movies.aggregate([{ $sample: { size: 1 } }]);
+    const selectedmovie = movie[0].title;
+    const location = "Los Angeles";
+    const truecoords = await getCoordinates(location);
+    console.log ("Test2", { location, truecoords });
+    const roundId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    rounds.set(roundId, {
+      answer: truecoords,
+      city: location
+    });
+    res.json({
+      movie: selectedmovie,
+      poster: movie[0].poster,
+      roundId
+    });
+  } catch (error) {
+    res.status(400).json({ message: 'Failed to get movie :(' });
+  }
 });
 
-
+//~~~~~~~~~~~~~~~~~~~~~ normal game logic
 router.post("/post", async (req, res) => {
-
   try {
-    const {lat, lng} = req.body; // Get user's guess from request body
-    console.log("User's guess:", { lat, lng });
-    if(!currentAnswer) {
-      return res.status(400).json({ message: 'No active game. Please start a new round.' });
-  }
-    const maxscore = 10000; // Max score for a perfect guess
-    distance = haversineDistance(lat, lng, currentAnswer.truelat, currentAnswer.truelng);
-const userscore = Math.max(0, Math.round(maxscore * Math.exp(-distance / 2000)));
-    coins = Math.round(userscore / 100); 
+    const { username, lat, lng, timer, roundId, timedOut } = req.body;
+    console.log("RECEIVED:", { lat, lng });
+
+    const round = rounds.get(roundId);
+
+    if (!round) {
+      console.warn("Round not found for ID:", roundId, "| Active rounds:", [...rounds.keys()]);
+
+      return res.json({
+        timedOut: true,
+        score: 0,
+        coins: 0,
+        distance: null,
+        timerbonus: 0,
+        answer: { city: "Unknown", lat: 0, lng: 0 }, // FIX: was null
+        userGuess: null
+      });
+    }
 
 
-  //returns the correct location and user's guess, and correct answer to display
-  return res.json({
-    answer: actualCity,
-    correctLocation: currentAnswer, 
-    score:userscore, 
-    coins: coins, 
-    distance: Math.round(distance),
-    userGuess: {lat, lng},
-  });
+    let distance = null;
+    let userscore = 0;
+    let coinsEarned = 0;
+    let timerbonus = timer * 50;;
+
+    if (!timedOut) {
+      
+      distance = haversineDistance(lat,lng,round.answer.truelat,round.answer.truelng);
+
+      const maxscore = 10000;
+
+      userscore = Math.max(0,Math.round(maxscore * Math.exp(-distance / 2000)) + timerbonus);
+
+      coinsEarned = Math.round(userscore / 100);
+    }
+
+    rounds.delete(roundId);
+
+    // Only update leaderboard if NOT timed out
+    if (!timedOut) {
+      await submitElsewhere(username, userscore, coinsEarned).catch(err =>
+        console.error("Leaderboard update error:", err)
+      );
+    }
+
+    return res.json({
+      roundId,
+      timedOut,
+      answer: {
+        city: round.city,
+        lat: round.answer.truelat,
+        lng: round.answer.truelng
+      },
+      score: userscore,
+      coins: coinsEarned,
+      distance: timedOut ? null : Math.round(distance),
+      userGuess: timedOut ? null : { lat, lng },
+      timerbonus
+    });
 
   } catch (error) {
     console.error('Error processing guess:', error);

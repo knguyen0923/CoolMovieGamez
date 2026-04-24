@@ -2,6 +2,7 @@ import React from 'react'
 import Card from 'react-bootstrap/Card';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import getUserInfo from "../../utilities/decodeJwt"; //used to get profile info for submission to backend
 
 import L from 'leaflet';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -29,6 +30,7 @@ const correctIcon = new L.Icon({
 });
 
 const designMode = false; // Set to true to enable design mode with hardcoded movie and location
+const ROUND_TIME = 30;
 
 const Guessr = () => {
     const [movie, setMovie] = React.useState("");
@@ -36,6 +38,32 @@ const Guessr = () => {
     const [position, setPosition] = React.useState(null);
     const [gameStarted, setGameStarted] = React.useState(false);
     const [loading, setLoading] = React.useState(false);
+
+    const [timeLeft, setTimeLeft] = React.useState(ROUND_TIME);
+    const [totalScore, setTotalScore] = React.useState(0);
+    const [round, setRound] = React.useState(1);
+    const [user, setUser] = React.useState(null);
+
+    const timerRef = React.useRef(null);
+    const timeLeftRef  = React.useRef(ROUND_TIME);
+    const hasSubmittedRef = React.useRef(false);
+    const roundIdRef = React.useRef(null);
+    const positionRef  = React.useRef(null);
+
+    const username = user?.username || "Guest";
+
+    React.useEffect(() => {
+      const userInfo = getUserInfo();
+      setUser(userInfo);
+    }, []);
+
+    React.useEffect(() => {
+      return () => clearInterval(timerRef.current);
+    }, []);
+
+    React.useEffect(() => {
+      positionRef.current = position;
+    }, [position]);
 
     const startNewRound = async () => {
     await fetchRound();
@@ -48,6 +76,11 @@ const Guessr = () => {
     }, [gameStarted]);
 
     const fetchRound = async () => {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+        
+      hasSubmittedRef.current = false;
+        
         setLoading(true);
         setResult(null);
         setPosition(null);
@@ -60,7 +93,9 @@ const Guessr = () => {
             const res = await fetch(endpoint);
             const data = await res.json();
             setMovie(data);
-            
+            roundIdRef.current = data.roundId;
+            startTimer();
+
         } catch (err) {
             console.error("Failed to load new round:", err);
         } finally {
@@ -93,6 +128,31 @@ const MapLock = ({ locked }) => {
     return null;
 };
 
+//~~~~~~~~~~~~~~timer for submission~~~~~~~~~~~~~~~~
+const startTimer = () => {
+  clearInterval(timerRef.current);
+
+  timeLeftRef.current = ROUND_TIME;
+  setTimeLeft(ROUND_TIME);
+
+timerRef.current = setInterval(() => {
+  timeLeftRef.current -= 1;
+
+  if (timeLeftRef.current <= 0) {
+    clearInterval(timerRef.current);
+    timerRef.current = null;
+    console.log("AUTO SUBMIT FIRED");
+    setTimeLeft(0);
+    handleSubmission(true);
+    return;
+  }
+
+  setTimeLeft(timeLeftRef.current);
+}, 1000);
+};
+
+
+
 //~~~~~~~~~~~~~~~autozooms to map bounds after guess is submitted
 const FitBounds = ({ position, results }) => {
   const map = useMap();
@@ -102,8 +162,8 @@ const FitBounds = ({ position, results }) => {
       const bounds = [
         [position.lat, position.lng],
         [
-          results.correctLocation.truelat,
-          results.correctLocation.truelng
+          results.answer.lat,
+          results.answer.lng
         ]
       ];
       map.fitBounds(bounds, { padding: [50, 50] });
@@ -118,33 +178,59 @@ const ClickHandler = () => {
     useMapEvents({
         click(e) {
         if (results) return; // Disable clicking after guess is submitted
-        setPosition(e.latlng);
+        setPosition({
+          lat: e.latlng.lat,
+          lng: e.latlng.lng
+        });        
+          console.log("Map clicked at:", e.latlng, "Lat:", e.latlng.lat, "Lng:", e.latlng.lng);
         },
     });
     return null;
 };
 
 //~~~~~~~~~~~~~~~~~~submits user guess to backend
-const handleSubmission = async () => {
-    if (!position) return;
+const handleSubmission = async (isAuto = false) => {
+  if (hasSubmittedRef.current) return;
+  hasSubmittedRef.current = true;
 
+  clearInterval(timerRef.current);
+  timerRef.current = null;
+
+  const currentPosition = positionRef.current;
+  const lat = isAuto ? null : currentPosition?.lat;
+  const lng = isAuto ? null : currentPosition?.lng;
+  
+
+  console.log("Check 1", { position, "Timer": timeLeft });
+  console.log("SENDING:", { lat, lng, isAuto });
     const res = await fetch('http://localhost:8081/guessr/post', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-        lat: position.lat,
-        lng: position.lng
+        
+        username: username,
+        lat,
+        lng,
+        timer: timeLeftRef.current,
+        roundId: roundIdRef.current,
+        timedOut: isAuto,
         })
     });
-
+ 
     const truedata = await res.json();
     setResult(truedata);
+
+    console.log("Check 3: Received response from server", truedata);
+
+    setTotalScore(prev => prev + truedata.score);
+    setRound(prev => prev + 1);
 
     console.log("Submitted guess:", position);
     console.log(truedata);
 };
 
 //~~~~~~~~~~~~~~~~~~~~~~displays page~~~~~~~~~~~~~~~~~~~~~~~
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 if (!gameStarted) {
   return (
@@ -188,25 +274,26 @@ if (!gameStarted) {
   )}
 
   {/* Correct marker + line */}
-  {results && (
+  {results?.answer && (
     <>
       <Marker
         position={[
-          results.correctLocation.truelat,
-          results.correctLocation.truelng
+          results.answer.lat, 
+          results.answer.lng
         ]}
         icon={correctIcon}
       />
-
+    {results?.answer && position && (
       <Polyline
         positions={[
           [position.lat, position.lng],
           [
-            results.correctLocation.truelat,
-            results.correctLocation.truelng
+            results.answer.lat,
+            results.answer.lng
           ]
         ]}
       />
+    )}
     </>
   )}
 </MapContainer>
@@ -220,6 +307,9 @@ if (!gameStarted) {
     <Card style={{ height: "100%" }}>
         <Card.Body className="text-center">
             <Card.Title>{movie.movie}</Card.Title>
+            <h5 style={{ color: timeLeft < 6 ? "red" : "grey" }}>
+              Time Left: {timeLeft}s
+            </h5>
         </Card.Body>
 
     <div style= {{flex: 1}}>
@@ -239,13 +329,20 @@ if (!gameStarted) {
     <Card>
       <Card.Body className="text-center">
         <Card.Title>Results</Card.Title>
+        {results.timedOut && (
+          <p style={{ color: "red", fontWeight: "bold" }}>
+            TIME'S UP!
+          </p>
+        )}
+
         <p>
-          <strong>Answer:</strong> {results.answer || "Unknown"}
+          <strong>Answer:</strong> {results.answer?.city || "Unknown"}
         </p>
 
         <p>
-          <strong>Your Guess:</strong> {results.userGuess?.lat.toFixed(2)},{" "}
-          {results.userGuess?.lng.toFixed(2)}
+          <strong>Your Guess:</strong> {results.userGuess
+  ? `${results.userGuess.lat.toFixed(2)}, ${results.userGuess.lng.toFixed(2)}`
+  : "No guess"}
         </p>
         <p>
           <strong>Score:</strong> {results.score || 0}
@@ -254,8 +351,15 @@ if (!gameStarted) {
             <strong>Coins Earned:</strong> {results.coins || 0}
         </p>
         <p> 
-            Distance: {results.distance || "Unknown"} km
+            Distance: {results.distance ?? "Unknown"} km
+        </p>        
+        <p> 
+            TIMER BONUS: {results.timerbonus}
         </p>
+        <p> 
+            Total Score: {totalScore} | Round: {round}
+        </p>
+
 
       </Card.Body>
     </Card>
@@ -269,7 +373,7 @@ if (!gameStarted) {
 <div className="text-center mt-3">
   {!results ? (
     <button
-      onClick={handleSubmission}
+      onClick={() => handleSubmission(false)}
       className="btn btn-primary"
       disabled={!position || results}
     >
