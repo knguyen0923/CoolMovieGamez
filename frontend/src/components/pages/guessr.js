@@ -237,7 +237,7 @@ if (!gameStarted) {
   return (
     <div className="text-center mt-5">
       <h1> Movie Guessr</h1>
-      <p>Guess where the movie was most popular!</p>
+      <p>Guess where the movie takes place!</p>
       <button
         className="btn btn-primary"
         onClick={() => setGameStarted(true)}
