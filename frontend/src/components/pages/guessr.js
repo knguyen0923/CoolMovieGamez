@@ -2,6 +2,7 @@ import React from 'react'
 import Card from 'react-bootstrap/Card';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import '../../css/guessr.css';
 import getUserInfo from "../../utilities/decodeJwt"; //used to get profile info for submission to backend
 
 import L from 'leaflet';
