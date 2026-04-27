@@ -3,7 +3,8 @@ import { Navigate } from "react-router-dom";
 import getUserInfo from "../../utilities/decodeJwt";
 
 import {
-  LineChart,
+  BarChart,
+  Bar,
   Line,
   XAxis,
   YAxis,
@@ -14,13 +15,10 @@ import {
 
 function AdminPage() {
   const [users, setUsers] = useState([]);
-  const [leaderboard, setLeaderboard] = useState([]);
   const [hiloData, setHiloData] = useState([]);
   const [guessrData, setGuessrData] = useState([]);
 
-  // chart states
-  const [allTimeData, setAllTimeData] = useState([]);
-  const [dailyData, setDailyData] = useState([]);
+  const [bellCurveData, setBellCurveData] = useState([]);
 
   const [game, setGame] = useState("hilo");
   const [search, setSearch] = useState("");
@@ -35,6 +33,11 @@ function AdminPage() {
 
   const token = localStorage.getItem("accessToken");
 
+  // grab users on mount
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
   // fetch users and leaderboards on mount and when game changes
   const fetchUsers = async () => {
     try {
@@ -44,29 +47,6 @@ function AdminPage() {
     } catch (err) {
       console.error(err);
       setUsers([]);
-    }
-  };
-
-  const fetchLeaderboard = async () => {
-    try {
-      const res = await fetch(
-        `http://localhost:8081/leaderboard/${game}`
-      );
-      const data = await res.json();
-
-      const clean = Array.isArray(data)
-        ? data
-            .map((item) => ({
-              ...item,
-              score: Number(item.score) || 0,
-            }))
-            .sort((a, b) => b.score - a.score)
-        : [];
-
-      setLeaderboard(clean);
-    } catch (err) {
-      console.error(err);
-      setLeaderboard([]);
     }
   };
 
@@ -89,42 +69,81 @@ function AdminPage() {
     }
   };
 
-  // Time tested fetch for both all-time and daily data
-  const fetchChartData = async () => {
+  // build bell curve data based on scores
+  const buildBellCurveData = (scores) => {
+    if (!scores.length) return [];
+
+    const maxScore = Math.max(...scores);
+    const binSize = maxScore ? Math.ceil(maxScore / 10) : 10;
+
+    const bins = {};
+
+    scores.forEach((score) => {
+      const bin = Math.floor(score / binSize) * binSize;
+      bins[bin] = (bins[bin] || 0) + 1;
+    });
+
+    return Object.keys(bins)
+      .map((bin) => ({
+        range: `${bin}-${Number(bin) + binSize}`,
+        count: bins[bin],
+      }))
+      .sort((a, b) => parseInt(a.range) - parseInt(b.range));
+  };
+
+  // build gaussian curve data based on scores and bins
+  const buildGaussianCurve = (scores, bins) => {
+    if (!scores.length || !bins.length) return [];
+
+    const mean = scores.reduce((sum, val) => sum + val, 0) / scores.length;
+
+    const variance =
+      scores.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) /
+      scores.length;
+
+    const stdDev = Math.sqrt(variance);
+
+    if (stdDev === 0) return bins; // prevent divide by zero
+
+    return bins.map((bin) => {
+      const [min, max] = bin.range.split("-").map(Number);
+      const midpoint = (min + max) / 2;
+
+      const exponent =
+        -Math.pow(midpoint - mean, 2) / (2 * Math.pow(stdDev, 2));
+
+      const gaussian =
+        (1 / (stdDev * Math.sqrt(2 * Math.PI))) * Math.exp(exponent);
+
+      return {
+        ...bin,
+        gaussian: gaussian * scores.length * 10, // scale line to bars
+      };
+    });
+  };
+
+  // fetch bell curve data
+  const fetchBellCurve = async () => {
     try {
-      const [allRes, dailyRes] = await Promise.all([
-        fetch(`http://localhost:8081/leaderboard/${game}`),
-        fetch(`http://localhost:8081/leaderboard/${game}?todayOnly=true`),
-      ]);
+      const res = await fetch(`http://localhost:8081/leaderboard/${game}`);
+      const data = await res.json();
 
-      const all = await allRes.json();
-      const daily = await dailyRes.json();
-
-      setAllTimeData(
-        (Array.isArray(all) ? all : []).map((i) => ({
-          name: i.username || "Unknown",
-          score: Number(i.score) || 0,
-        }))
+      const scores = (Array.isArray(data) ? data : []).map(
+        (i) => Number(i.score) || 0,
       );
 
-      setDailyData(
-        (Array.isArray(daily) ? daily : []).map((i) => ({
-          name: i.username || "Unknown",
-          score: Number(i.score) || 0,
-        }))
-      );
+      const curve = buildBellCurveData(scores);
+      setBellCurveData(curve);
     } catch (err) {
-      console.error("Chart error:", err);
-      setAllTimeData([]);
-      setDailyData([]);
+      console.error("Bell curve error:", err);
+      setBellCurveData([]);
     }
   };
 
+  //update data when game
   useEffect(() => {
-    fetchUsers();
-    fetchLeaderboard();
+    fetchBellCurve();
     fetchAllLeaderboards();
-    fetchChartData(); // 🔥 ADDED
   }, [game]);
 
   // Admin actions
@@ -143,24 +162,32 @@ function AdminPage() {
     fetchUsers();
   };
 
+  // delete user and update all data to reflect change
   const deleteUser = async (id) => {
-    await fetch(`http://localhost:8081/users/${id}`, {
-      method: "DELETE",
-    });
-    fetchUsers();
-  };
+    //confirm deletion
+    if (!window.confirm("Are you sure you want to delete this user?")) return;
+    try {
+      const res = await fetch(`http://localhost:8081/users/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-  const deleteScore = async (id) => {
-    await fetch(
-      `http://localhost:8081/leaderboard/${game}/${id}`,
-      { method: "DELETE" }
-    );
-    fetchLeaderboard();
+      await res.json();
+
+      // refresh all data after deletion
+      fetchUsers();
+      fetchBellCurve();
+      fetchAllLeaderboards();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   // filter users based on search
   const filteredUsers = users.filter((u) =>
-    u.username?.toLowerCase().includes(search.toLowerCase())
+    u.username?.toLowerCase().includes(search.toLowerCase()),
   );
 
   // Stat for card display - calculates average score for given data
@@ -168,7 +195,7 @@ function AdminPage() {
     data.length > 0
       ? Math.round(
           data.reduce((sum, i) => sum + (Number(i.score) || 0), 0) /
-            data.length
+            data.length,
         )
       : 0;
 
@@ -188,25 +215,20 @@ function AdminPage() {
         <ul>
           <li onClick={() => setTab("dashboard")}>Dashboard</li>
           <li onClick={() => setTab("users")}>Users</li>
-          <li onClick={() => setTab("leaderboard")}>Leaderboard</li>
         </ul>
       </div>
 
       {/* Main */}
       <div className="dashboard-main">
-        {/* Header */}
         <div style={{ marginBottom: 20 }}>
           <h1>
             {tab === "dashboard" && "Dashboard"}
             {tab === "users" && "User Management"}
-            {tab === "leaderboard" && "Leaderboard"}
           </h1>
-          <p style={{ opacity: 0.6 }}>
-            Manage your platform data
-          </p>
+          <p style={{ opacity: 0.6 }}>Manage your platform data</p>
         </div>
 
-        {/* Dashboard */}
+        {/* DASHBOARD */}
         {tab === "dashboard" && (
           <>
             <div className="stats-grid">
@@ -217,99 +239,41 @@ function AdminPage() {
 
               <div className="stat-card">
                 <h4>Hilo Avg</h4>
-                <p>{hiloAvg}</p>
+                <p>{getAvg(hiloData)}</p>
               </div>
 
               <div className="stat-card">
                 <h4>Guessr Avg</h4>
-                <p>{guessrAvg}</p>
+                <p>{getAvg(guessrData)}</p>
               </div>
             </div>
 
             <div className="card">
-              <h3>All-Time Scores ({game})</h3>
+              <h3>Score Distribution (Bell Curve) - {game}</h3>
 
-              <select
-                value={game}
-                onChange={(e) => setGame(e.target.value)}
-              >
+              <select value={game} onChange={(e) => setGame(e.target.value)}>
                 <option value="hilo">Hilo</option>
                 <option value="guessr">Guessr</option>
               </select>
 
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={allTimeData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-
-                  <XAxis
-                    dataKey="name"
-                    angle={-30}
-                    textAnchor="end"
-                    label={{
-                      value: "Players",
-                      position: "insideBottom",
-                      offset: -10,
-                    }}
-                  />
-
-                  <YAxis
-                    label={{
-                      value: "Score",
-                      angle: -90,
-                      position: "insideLeft",
-                    }}
-                  />
-
-                  <Tooltip />
-
-                  <Line
-                    type="monotone"
-                    dataKey="score"
-                    stroke="#22c55e"
-                    strokeWidth={3}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div className="card">
-              <h3>Today's Scores ({game})</h3>
-
-              {dailyData.length === 0 ? (
-                <p>No scores today</p>
+              {bellCurveData.length === 0 ? (
+                <p>No score data available</p>
               ) : (
                 <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={dailyData}>
+                  <BarChart data={bellCurveData}>
                     <CartesianGrid strokeDasharray="3 3" />
-
-                    <XAxis
-                      dataKey="name"
-                      angle={-30}
-                      textAnchor="end"
-                      label={{
-                        value: "Players",
-                        position: "insideBottom",
-                        offset: -10,
-                      }}
-                    />
-
-                    <YAxis
-                      label={{
-                        value: "Score",
-                        angle: -90,
-                        position: "insideLeft",
-                      }}
-                    />
-
+                    <XAxis dataKey="range" />
+                    <YAxis />
                     <Tooltip />
-
+                    <Bar dataKey="count" />
                     <Line
                       type="monotone"
-                      dataKey="score"
-                      stroke="#3b82f6"
+                      dataKey="gaussian"
+                      stroke="#ef4444"
                       strokeWidth={3}
+                      dot={false}
                     />
-                  </LineChart>
+                  </BarChart>
                 </ResponsiveContainer>
               )}
             </div>
@@ -338,19 +302,13 @@ function AdminPage() {
                   <span>{u.username}</span>
                   <span>{u.email}</span>
 
-                  <span
-                    className={`role ${
-                      u.role === "admin" ? "admin" : ""
-                    }`}
-                  >
+                  <span className={`role ${u.role === "admin" ? "admin" : ""}`}>
                     {u.role || "user"}
                   </span>
 
                   <div className="actions">
                     <button onClick={() => toggleRole(u)}>
-                      {u.role === "admin"
-                        ? "Remove Admin"
-                        : "Make Admin"}
+                      {u.role === "admin" ? "Remove Admin" : "Make Admin"}
                     </button>
 
                     <button
@@ -360,41 +318,6 @@ function AdminPage() {
                       Delete
                     </button>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Leaderboard */}
-        {tab === "leaderboard" && (
-          <div className="card">
-            <select
-              value={game}
-              onChange={(e) => setGame(e.target.value)}
-            >
-              <option value="hilo">Hilo</option>
-              <option value="guessr">Guessr</option>
-            </select>
-
-            <div className="table">
-              <div className="table-header">
-                <span>User</span>
-                <span>Score</span>
-                <span>Actions</span>
-              </div>
-
-              {leaderboard.map((entry) => (
-                <div key={entry._id} className="table-row">
-                  <span>{entry.username}</span>
-                  <span className="score">{entry.score}</span>
-
-                  <button
-                    className="danger"
-                    onClick={() => deleteScore(entry._id)}
-                  >
-                    Delete
-                  </button>
                 </div>
               ))}
             </div>
