@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require("express");
 const app = express();
 const cors = require('cors')
@@ -39,10 +40,26 @@ const apiCreateData = require('./routes/apiRoutes/apiCreateData')
 const apiGet = require('./routes/apiRoutes/apiGet')
 const apiDeleteAll = require('./routes/apiRoutes/apiDeleteAll')
 
-require('dotenv').config();
+// Render & Vercel config
 const SERVER_PORT = process.env.PORT || 8081;
 dbConnection()
-app.use(cors({origin: '*'}))
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://coolmoviegamez.vercel.app"
+];
+app.use(cors({
+  origin: function (origin, callback) {
+    console.log("Origin:", origin); // 👈 add this for debugging
+
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS: " + origin));
+    }
+  },
+  credentials: true
+}));
+
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
