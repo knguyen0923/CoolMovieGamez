@@ -34,7 +34,7 @@ const correctIcon = new L.Icon({
   iconSize: [32, 32],
 });
 
-const designMode = true; // Set to true to enable design mode with hardcoded movie and location
+const designMode = false; // Set to true to enable design mode with hardcoded movie and location
 const ROUND_TIME = 30;
 
 const Guessr = () => {
