@@ -45,7 +45,8 @@ const SERVER_PORT = process.env.PORT || 8081;
 dbConnection()
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://coolmoviegamez.vercel.app"
+  "http://localhost:8096",
+  "https://cool-movie-gamez-eu42u1o9w-knguyen0923s-projects.vercel.app"
 ];
 app.use(cors({
   origin: function (origin, callback) {
