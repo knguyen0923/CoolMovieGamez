@@ -167,6 +167,7 @@ const Hilo = () => {
 
         const data = await response.json();
         setTotalCoins(Number(data.profile?.coins) || 0);
+        window.dispatchEvent(new Event("coinsUpdated"));
     };
 
     const calculateRoundScore = (timeTakenMs) => (

@@ -225,6 +225,7 @@ const handleSubmission = async (isAuto = false) => {
 
     setTotalScore(prev => prev + truedata.score);
     setRound(prev => prev + 1);
+    window.dispatchEvent(new Event("coinsUpdated"));
 
     console.log("Submitted guess:", position);
     console.log(truedata);

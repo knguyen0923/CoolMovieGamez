@@ -34,9 +34,9 @@ export default function Navbar({ darkMode, setDarkMode }) {
       });
   }, [user, location]);
 
-  // 🔥 live cosmetic updates
+  // 🔥 live updates (cosmetics + coins)
   useEffect(() => {
-    const syncCosmetics = () => {
+    const syncProfile = () => {
       const userInfo = getUserInfo();
       if (!userInfo) return;
 
@@ -50,10 +50,12 @@ export default function Navbar({ darkMode, setDarkMode }) {
         });
     };
 
-    window.addEventListener("cosmeticsUpdated", syncCosmetics);
+    window.addEventListener("cosmeticsUpdated", syncProfile);
+    window.addEventListener("coinsUpdated", syncProfile);
 
     return () => {
-      window.removeEventListener("cosmeticsUpdated", syncCosmetics);
+      window.removeEventListener("cosmeticsUpdated", syncProfile);
+      window.removeEventListener("coinsUpdated", syncProfile);
     };
   }, []);
 
@@ -137,26 +139,48 @@ export default function Navbar({ darkMode, setDarkMode }) {
 
           {user && (
             <>
-              {/* 🛒 Shop FIRST */}
               <Nav.Link as={Link} to="/shop">
                 Shop
               </Nav.Link>
 
-              {/* 👤 Profile with full cosmetics */}
-              <Nav.Link href="/privateUserProfile" style={{ padding: "0" }}>
-                <div style={rainbowContainer}>
+              {/* 👤 Profile + 💰 Coins */}
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                
+                {/* Profile (clickable) */}
+                <Nav.Link href="/privateUserProfile" style={{ padding: "0" }}>
+                  <div style={rainbowContainer}>
+                    <img
+                      src={buildImageUrl(profile?.avatarUrl)}
+                      alt="profile"
+                      style={avatarStyle}
+                    />
+                    <span style={rainbowText}>{user.username}</span>
+                  </div>
+                </Nav.Link>
+
+                {/* Coins (not clickable) */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "4px 8px",
+                    borderRadius: "8px",
+                    backgroundColor: darkMode ? "#2a2a2a" : "#f1f1f1",
+                    color: darkMode ? "#fff" : "#000",
+                    fontSize: "14px",
+                    boxShadow: "0 0 6px rgba(255, 215, 0, 0.5)"
+                  }}
+                >
                   <img
-                    src={buildImageUrl(profile?.avatarUrl)}
-                    alt="profile"
-                    style={avatarStyle}
+                    src="https://coolmoviegamez-avatars.s3.us-east-2.amazonaws.com/dollar.png"
+                    alt="coin"
+                    style={{ width: "16px", height: "16px" }}
                   />
-                  <span style={rainbowText}>
-                    {user.username
-                      ? `${user.username}'s Profile`
-                      : "User Profile"}
-                  </span>
+                  <span>{profile?.coins ?? 0}</span>
                 </div>
-              </Nav.Link>
+
+              </div>
 
               <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
             </>
