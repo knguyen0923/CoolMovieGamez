@@ -213,6 +213,83 @@ const ShopPage = () => {
     }
   };
 
+  const handleEquipAll = async () => {
+    try {
+      const formData = new FormData();
+
+      if (profile.ownedCosmetics.includes("gold-avatar-border")) {
+        formData.append("avatarBorder", "gold");
+      }
+
+      if (profile.ownedCosmetics.includes("rainbow-username")) {
+        formData.append("usernameStyle", "rainbow");
+      }
+
+      if (profile.ownedCosmetics.includes("rainbow-profile-border")) {
+        formData.append("profileBorder", "rainbow");
+      }
+
+      const res = await fetch(
+        `${API_BASE}/api/userProfile/${user.username}/shop`,
+        {
+          method: "PUT",
+          body: formData
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message);
+
+      setProfile((prev) => ({
+        ...prev,
+        avatarBorder: data.profile?.avatarBorder || "",
+        usernameStyle: data.profile?.usernameStyle || "",
+        profileBorder: data.profile?.profileBorder || ""
+      }));
+
+      setMessage("All owned cosmetics equipped");
+      window.dispatchEvent(new Event("cosmeticsUpdated"));
+    } catch (err) {
+      console.error(err);
+      setMessage("Failed to equip all");
+    }
+  };
+
+  const handleUnequipAll = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("avatarBorder", "");
+      formData.append("usernameStyle", "");
+      formData.append("profileBorder", "");
+
+      const res = await fetch(
+        `${API_BASE}/api/userProfile/${user.username}/shop`,
+        {
+          method: "PUT",
+          body: formData
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message);
+
+      setProfile((prev) => ({
+        ...prev,
+        avatarBorder: "",
+        usernameStyle: "",
+        profileBorder: ""
+      }));
+
+      setMessage("All cosmetics unequipped");
+      window.dispatchEvent(new Event("cosmeticsUpdated"));
+    } catch (err) {
+      console.error(err);
+      setMessage("Failed to unequip all");
+    }
+  };
+
   if (!user) {
     return (
       <div style={{ padding: "30px", textAlign: "center" }}>
@@ -239,6 +316,8 @@ const ShopPage = () => {
     height: "140px",
     borderRadius: "50%",
     objectFit: "cover",
+    display: "block",
+    margin: "0 auto",
     border:
       profile.avatarBorder === "gold"
         ? "4px solid gold"
@@ -250,7 +329,11 @@ const ShopPage = () => {
   const pageStyle = {
     minHeight: "100vh",
     padding: "30px",
-    backgroundColor: darkMode ? "#121212" : "#f4f4f4",
+    backgroundImage:
+      "url('https://coolmoviegamez-avatars.s3.us-east-2.amazonaws.com/shop.jpeg')",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
     color: darkMode ? "#ffffff" : "#000000",
     transition: "all 0.3s ease"
   };
@@ -261,42 +344,61 @@ const ShopPage = () => {
     padding: "25px",
     borderRadius: "14px",
     background: darkMode ? "#1e1e1e" : "#fff",
-    color: darkMode ? "#ffffff" : "#000000",
-    border:
-      profile.profileBorder === "rainbow"
-        ? "4px solid transparent"
-        : darkMode
-        ? "2px solid #444"
-        : "2px solid #ddd",
-    backgroundImage:
-      profile.profileBorder === "rainbow"
-        ? darkMode
-          ? "linear-gradient(#1e1e1e, #1e1e1e), linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet)"
-          : "linear-gradient(white, white), linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet)"
-        : "none",
-    backgroundOrigin:
-      profile.profileBorder === "rainbow" ? "border-box" : "initial",
-    backgroundClip:
-      profile.profileBorder === "rainbow"
-        ? "padding-box, border-box"
-        : "initial",
-    boxShadow: darkMode
-      ? "0 0 12px rgba(255,255,255,0.08)"
-      : "0 0 10px rgba(0,0,0,0.15)",
-    transition: "all 0.3s ease"
+    color: darkMode ? "#ffffff" : "#000000"
   };
 
   const itemCardStyle = {
     border: darkMode ? "1px solid #444" : "1px solid #ddd",
     borderRadius: "10px",
     padding: "15px",
-    backgroundColor: darkMode ? "#2a2a2a" : "#ffffff",
-    color: darkMode ? "#ffffff" : "#000000",
-    transition: "all 0.3s ease"
+    backgroundColor: darkMode ? "#2a2a2a" : "#ffffff"
   };
 
   const buttonStyle = {
     padding: "10px 16px",
+    border: "none",
+    borderRadius: "8px",
+    background: darkMode ? "#2f2f2f" : "black",
+    color: "white",
+    cursor: "pointer"
+  };
+
+  const popupOverlayStyle = {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    backgroundColor: "rgba(0,0,0,0.45)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 9999
+  };
+
+  const popupBoxStyle = {
+    position: "relative",
+    width: "300px",
+    padding: "25px",
+    borderRadius: "12px",
+    backgroundColor: darkMode ? "#1e1e1e" : "#ffffff",
+    color: darkMode ? "#ffffff" : "#000000",
+    textAlign: "center"
+  };
+
+  const popupXStyle = {
+    position: "absolute",
+    top: "8px",
+    right: "12px",
+    border: "none",
+    background: "transparent",
+    color: darkMode ? "#ffffff" : "#000000",
+    fontSize: "22px",
+    cursor: "pointer"
+  };
+
+  const popupButtonStyle = {
+    padding: "8px 16px",
     border: "none",
     borderRadius: "8px",
     background: darkMode ? "#2f2f2f" : "black",
@@ -317,6 +419,49 @@ const ShopPage = () => {
           />
           <h2 style={usernameStyle}>{user.username}</h2>
           <p><strong>Coins:</strong> {profile.coins}</p>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: "10px",
+              marginTop: "10px"
+            }}
+          >
+            <button
+  onClick={() => {
+    const allEquipped =
+      (profile.ownedCosmetics.includes("gold-avatar-border")
+        ? profile.avatarBorder === "gold"
+        : true) &&
+      (profile.ownedCosmetics.includes("rainbow-username")
+        ? profile.usernameStyle === "rainbow"
+        : true) &&
+      (profile.ownedCosmetics.includes("rainbow-profile-border")
+        ? profile.profileBorder === "rainbow"
+        : true);
+
+    allEquipped ? handleUnequipAll() : handleEquipAll();
+  }}
+  style={buttonStyle}
+>
+  {
+    (
+      (profile.ownedCosmetics.includes("gold-avatar-border")
+        ? profile.avatarBorder === "gold"
+        : true) &&
+      (profile.ownedCosmetics.includes("rainbow-username")
+        ? profile.usernameStyle === "rainbow"
+        : true) &&
+      (profile.ownedCosmetics.includes("rainbow-profile-border")
+        ? profile.profileBorder === "rainbow"
+        : true)
+    )
+      ? "Unequip All"
+      : "Equip All"
+  }
+</button>
+          </div>
         </div>
 
         <div style={{ display: "grid", gap: "15px" }}>
@@ -333,16 +478,10 @@ const ShopPage = () => {
                 <h3>{item.name}</h3>
                 <p>{item.description}</p>
                 <p><strong>Price:</strong> {item.price} coins</p>
-                {owned && (
-                  <p style={{ fontWeight: "bold", marginBottom: "10px" }}>
-                    Owned
-                  </p>
-                )}
+                {owned && <p><strong>Owned</strong></p>}
                 <button
                   onClick={() =>
-                    equipped
-                      ? handleUnequipItem(item)
-                      : handleBuy(item)
+                    equipped ? handleUnequipItem(item) : handleBuy(item)
                   }
                   style={buttonStyle}
                 >
@@ -354,9 +493,21 @@ const ShopPage = () => {
         </div>
 
         {message && (
-          <p style={{ textAlign: "center", marginTop: "20px", fontWeight: "bold" }}>
-            {message}
-          </p>
+          <div style={popupOverlayStyle}>
+            <div style={popupBoxStyle}>
+              <button onClick={() => setMessage("")} style={popupXStyle}>
+                ×
+              </button>
+
+              <p style={{ margin: "20px 0", fontWeight: "bold" }}>
+                {message}
+              </p>
+
+              <button onClick={() => setMessage("")} style={popupButtonStyle}>
+                Close
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>
