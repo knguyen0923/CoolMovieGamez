@@ -1,10 +1,15 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { UserContext } from "../../App";
+import useHiloButtonSound from "../../utilities/useHiloButtonSound";
 
 const API_BASE = "http://localhost:8081";
+const SHOP_PURCHASE_SOUND_PATH = "/sounds/845357__etheraudio__retro-coin-thing.wav";
 
 const ShopPage = () => {
   const user = useContext(UserContext);
+  const playEquipSound = useHiloButtonSound({
+    errorLabel: "shop equip sound"
+  });
   const [darkMode, setDarkMode] = useState(
     localStorage.getItem("darkMode") === "true"
   );
@@ -19,6 +24,7 @@ const ShopPage = () => {
   });
 
   const [message, setMessage] = useState("");
+  const purchaseSoundRef = useRef(null);
 
   const shopItems = [
     {
@@ -77,6 +83,27 @@ const ShopPage = () => {
       });
   }, [user]);
 
+  useEffect(() => {
+    const audio = new Audio(`${process.env.PUBLIC_URL}${SHOP_PURCHASE_SOUND_PATH}`);
+    audio.preload = "auto";
+    audio.volume = 0.55;
+    purchaseSoundRef.current = audio;
+  }, []);
+
+  const playShopSound = () => {
+    if (!purchaseSoundRef.current) {
+      return;
+    }
+
+    const soundInstance = purchaseSoundRef.current.cloneNode();
+    soundInstance.volume = purchaseSoundRef.current.volume;
+    soundInstance.play().catch((error) => {
+      if (error?.name !== "NotAllowedError") {
+        console.error("Failed to play shop purchase sound:", error);
+      }
+    });
+  };
+
   const buildImageUrl = (avatarUrl) => {
     if (!avatarUrl) return "https://via.placeholder.com/140";
 
@@ -110,6 +137,7 @@ const ShopPage = () => {
     if (!alreadyOwned) {
       if (profile.coins < item.price) {
         setMessage("Not enough coins");
+        playShopSound();
         return;
       }
 
@@ -160,6 +188,12 @@ const ShopPage = () => {
           : `${item.name} purchased successfully`
       );
 
+      if (alreadyOwned) {
+        playEquipSound();
+      } else {
+        playShopSound();
+      }
+
       window.dispatchEvent(new Event("cosmeticsUpdated"));
     } catch (error) {
       console.error(error);
@@ -206,6 +240,7 @@ const ShopPage = () => {
       }));
 
       setMessage(`${item.name} unequipped`);
+      playShopSound();
       window.dispatchEvent(new Event("cosmeticsUpdated"));
     } catch (err) {
       console.error(err);
@@ -249,6 +284,7 @@ const ShopPage = () => {
       }));
 
       setMessage("All owned cosmetics equipped");
+      playEquipSound();
       window.dispatchEvent(new Event("cosmeticsUpdated"));
     } catch (err) {
       console.error(err);
@@ -283,6 +319,7 @@ const ShopPage = () => {
       }));
 
       setMessage("All cosmetics unequipped");
+      playShopSound();
       window.dispatchEvent(new Event("cosmeticsUpdated"));
     } catch (err) {
       console.error(err);

@@ -5,13 +5,20 @@ import Container from "react-bootstrap/Container";
 import Nav from "react-bootstrap/Nav";
 import ReactNavbar from "react-bootstrap/Navbar";
 import { Link } from "react-router-dom";
+import useHiloButtonSound from "../utilities/useHiloButtonSound";
 
 const API_BASE = "http://localhost:8081";
+const NAV_TAB_SOUND_PATH = "/sounds/506053__mellau__button-click-2.wav";
 
 export default function Navbar({ darkMode, setDarkMode }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const location = useLocation();
+  const playNavTabSound = useHiloButtonSound({
+    soundPath: NAV_TAB_SOUND_PATH,
+    volume: 0.45,
+    errorLabel: "navbar tab sound"
+  });
 
   useEffect(() => {
     const userInfo = getUserInfo();
@@ -124,22 +131,24 @@ export default function Navbar({ darkMode, setDarkMode }) {
   return (
     <ReactNavbar bg="dark" variant="dark">
       <Container>
-        <ReactNavbar.Brand href="/LandingPage">CoolMovieGamez</ReactNavbar.Brand>
+        <ReactNavbar.Brand as={Link} to="/LandingPage" onClick={playNavTabSound}>
+          CoolMovieGamez
+        </ReactNavbar.Brand>
 
         <Nav className="ms-auto">
-          <Nav.Link href="/hilo">Hilo</Nav.Link>
-          <Nav.Link href="/guessr">Guessr</Nav.Link>
-          <Nav.Link href="/leaderboard">Leaderboard</Nav.Link>
+          <Nav.Link as={Link} to="/hilo" onClick={playNavTabSound}>Hilo</Nav.Link>
+          <Nav.Link as={Link} to="/guessr" onClick={playNavTabSound}>Guessr</Nav.Link>
+          <Nav.Link as={Link} to="/leaderboard" onClick={playNavTabSound}>Leaderboard</Nav.Link>
 
           {user?.role === "admin" && (
-            <Nav.Link as={Link} to="/admin" className="text-danger fw-bold">
+            <Nav.Link as={Link} to="/admin" className="text-danger fw-bold" onClick={playNavTabSound}>
               Admin
             </Nav.Link>
           )}
 
           {user && (
             <>
-              <Nav.Link as={Link} to="/shop">
+              <Nav.Link as={Link} to="/shop" onClick={playNavTabSound}>
                 Shop
               </Nav.Link>
 
@@ -147,7 +156,7 @@ export default function Navbar({ darkMode, setDarkMode }) {
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 
                 {/* Profile (clickable) */}
-                <Nav.Link href="/privateUserProfile" style={{ padding: "0" }}>
+                <Nav.Link as={Link} to="/privateUserProfile" style={{ padding: "0" }} onClick={playNavTabSound}>
                   <div style={rainbowContainer}>
                     <img
                       src={buildImageUrl(profile?.avatarUrl)}
@@ -188,8 +197,8 @@ export default function Navbar({ darkMode, setDarkMode }) {
 
           {!user && (
             <>
-              <Nav.Link href="/login">Login</Nav.Link>
-              <Nav.Link href="/signup">Sign Up</Nav.Link>
+              <Nav.Link as={Link} to="/login" onClick={playNavTabSound}>Login</Nav.Link>
+              <Nav.Link as={Link} to="/signup" onClick={playNavTabSound}>Sign Up</Nav.Link>
             </>
           )}
 

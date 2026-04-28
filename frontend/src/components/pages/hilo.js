@@ -3,6 +3,7 @@ import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
 import { UserContext } from '../../App';
 import getUserInfo from '../../utilities/decodeJwt';
+import useHiloButtonSound from '../../utilities/useHiloButtonSound';
 import '../../css/hilo.css';
 
 // base url for the backend stuff
@@ -16,13 +17,21 @@ const BEST_STREAK_STORAGE_KEY = 'hilo-best-streak';
 const TOTAL_COINS_STORAGE_KEY = 'hilo-total-coins';
 const GUESS_REVEAL_DURATION_MS = 950;
 const MAX_CORRECT_GUESSES = 10;
+const HILO_END_GAME_SOUND_PATH = '/sounds/506053__mellau__button-click-2.wav';
 
 const formatVoteCount = (value) => Number(value || 0).toLocaleString();
 const formatResponseTime = (ms) => `${(ms / 1000).toFixed(1)}s`;
+const getUserScopedStorageKey = (baseKey, username) => `${baseKey}:${username}`;
 
 const Hilo = () => {
     const contextUser = useContext(UserContext);
     const user = contextUser || getUserInfo();
+    const playButtonSound = useHiloButtonSound();
+    const playEndGameSound = useHiloButtonSound({
+        soundPath: HILO_END_GAME_SOUND_PATH,
+        volume: 0.45,
+        errorLabel: 'HiLo end game sound',
+    });
 
     // are we in the game yet
     const [gameStarted, setGameStarted] = useState(false);
@@ -66,38 +75,57 @@ const Hilo = () => {
     // tracks how long the same winning movie has stayed on screen
     const carryoverTrackerRef = useRef({ movieId: null, wins: 0 });
 
-    // pull local progress back in on page load
+    // pull local progress back in for the active signed-in user only
     useEffect(() => {
-        const storedHighScore = Number(localStorage.getItem(HIGH_SCORE_STORAGE_KEY) || 0);
+        if (!user?.username) {
+            setHighScore(0);
+            setBestStreak(0);
+            setTotalCoins(0);
+            return;
+        }
+
+        const storedHighScore = Number(localStorage.getItem(getUserScopedStorageKey(HIGH_SCORE_STORAGE_KEY, user.username)) || 0);
         if (!Number.isNaN(storedHighScore)) {
             setHighScore(storedHighScore);
         }
 
-        const storedBestStreak = Number(localStorage.getItem(BEST_STREAK_STORAGE_KEY) || 0);
+        const storedBestStreak = Number(localStorage.getItem(getUserScopedStorageKey(BEST_STREAK_STORAGE_KEY, user.username)) || 0);
         if (!Number.isNaN(storedBestStreak)) {
             setBestStreak(storedBestStreak);
         }
 
-        const storedTotalCoins = Number(localStorage.getItem(TOTAL_COINS_STORAGE_KEY) || 0);
+        const storedTotalCoins = Number(localStorage.getItem(getUserScopedStorageKey(TOTAL_COINS_STORAGE_KEY, user.username)) || 0);
         if (!Number.isNaN(storedTotalCoins)) {
             setTotalCoins(storedTotalCoins);
         }
-    }, []);
+    }, [user?.username]);
 
-    // keep high score saved between refreshes
+    // keep local stats scoped to the current signed-in player
     useEffect(() => {
-        localStorage.setItem(HIGH_SCORE_STORAGE_KEY, String(highScore));
-    }, [highScore]);
+        if (!user?.username) {
+            return;
+        }
+
+        localStorage.setItem(getUserScopedStorageKey(HIGH_SCORE_STORAGE_KEY, user.username), String(highScore));
+    }, [highScore, user?.username]);
 
     // keep best streak saved between refreshes
     useEffect(() => {
-        localStorage.setItem(BEST_STREAK_STORAGE_KEY, String(bestStreak));
-    }, [bestStreak]);
+        if (!user?.username) {
+            return;
+        }
+
+        localStorage.setItem(getUserScopedStorageKey(BEST_STREAK_STORAGE_KEY, user.username), String(bestStreak));
+    }, [bestStreak, user?.username]);
 
     // cache total coins locally so the page feels instant on reload
     useEffect(() => {
-        localStorage.setItem(TOTAL_COINS_STORAGE_KEY, String(totalCoins));
-    }, [totalCoins]);
+        if (!user?.username) {
+            return;
+        }
+
+        localStorage.setItem(getUserScopedStorageKey(TOTAL_COINS_STORAGE_KEY, user.username), String(totalCoins));
+    }, [totalCoins, user?.username]);
 
     // sync coin total with the profile when a logged-in user opens the page
     useEffect(() => {
@@ -365,6 +393,7 @@ const Hilo = () => {
 
     //start the game + load first 2 movies
     const handleStartGame = async () => {
+        playButtonSound();
         setGameStarted(true);
         setShowGameOverPanel(false);
         setScore(0);
@@ -378,6 +407,7 @@ const Hilo = () => {
 
     //end game, save highscore if needed, reset some stuff
     const handleEndGame = async () => {
+        playEndGameSound();
         await finishGame('Game over. Start a new round whenever you are ready.');
     };
 
@@ -386,6 +416,8 @@ const Hilo = () => {
         if (isLoading || movies.length !== 2) {
             return;
         }
+
+        playButtonSound();
 
         const keepLeft = sidePicked === 'left';
         const pickedMovie = keepLeft ? movies[0] : movies[1];

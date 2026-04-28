@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import '../../css/guessr.css';
 import getUserInfo from "../../utilities/decodeJwt"; //used to get profile info for submission to backend
+import useHiloButtonSound from "../../utilities/useHiloButtonSound";
 
 import L from 'leaflet';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -13,6 +14,8 @@ import { Polyline } from 'react-leaflet';
 import { useMap } from 'react-leaflet';
 
 delete L.Icon.Default.prototype._getIconUrl;
+
+const GUESSR_SUBMIT_SOUND_PATH = '/sounds/506053__mellau__button-click-2.wav';
 
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
@@ -50,6 +53,12 @@ const Guessr = () => {
     const hasSubmittedRef = React.useRef(false);
     const roundIdRef = React.useRef(null);
     const positionRef  = React.useRef(null);
+    const playButtonSound = useHiloButtonSound();
+    const playSubmitSound = useHiloButtonSound({
+      soundPath: GUESSR_SUBMIT_SOUND_PATH,
+      volume: 0.45,
+      errorLabel: 'Guessr submit sound',
+    });
 
     const username = user?.username || "Guest";
 
@@ -241,7 +250,10 @@ if (!gameStarted) {
       <p>Guess where the movie takes place!</p>
       <button
         className="btn btn-primary"
-        onClick={() => setGameStarted(true)}
+        onClick={() => {
+          playButtonSound();
+          setGameStarted(true);
+        }}
       >
         Start Game
         {loading && <p>Loading new round...</p>}
@@ -375,7 +387,10 @@ if (!gameStarted) {
 <div className="text-center mt-3">
   {!results ? (
     <button
-      onClick={() => handleSubmission(false)}
+      onClick={() => {
+        playSubmitSound();
+        handleSubmission(false);
+      }}
       className="btn btn-primary"
       disabled={!position || results}
     >
@@ -383,7 +398,10 @@ if (!gameStarted) {
     </button>
   ) : (
     <button
-      onClick={startNewRound}
+      onClick={() => {
+        playButtonSound();
+        startNewRound();
+      }}
       className="btn btn-success"
     >
       Next Round
