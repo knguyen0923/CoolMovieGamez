@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 
 
 function LeaderboardPage() {
+    const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8081";
 
     // State to store leaderboard data
     const [leaderboard, setLeaderboard] = useState([]);
@@ -18,7 +19,7 @@ function LeaderboardPage() {
     const fetchLeaderboard = async () => {
         try { 
             setLoading(true)
-            const response = await fetch(`http://localhost:8081/leaderboard/${game}`);
+            const response = await fetch(`${API_BASE}/leaderboard/${game}`);
             if (!response.ok) {
                 throw new Error(`Server error: ${response.status}`);
             }

@@ -6,7 +6,7 @@ const rounds = new Map(); // In-memory store for active rounds
 
 const { GoogleGenAI } = require("@google/genai");
 const { FOR_THE_MAP_API } = process.env;
-
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8081";
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY
 });
@@ -56,7 +56,7 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 //~~~~~~~~~~~~~~updates leaderboard and coins on game complete~~~~~~~~~~~~~~`
 async function submitElsewhere(username, score, coins) {
 
-  await fetch('http://localhost:8081/leaderboard/guessr', {
+  await fetch(`${API_BASE}/leaderboard/guessr`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json'
@@ -68,7 +68,7 @@ async function submitElsewhere(username, score, coins) {
     })
   });
 
-  await fetch(`http://localhost:8081/api/userProfile/${username}`, {
+  await fetch(`${API_BASE}/api/userProfile/${username}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

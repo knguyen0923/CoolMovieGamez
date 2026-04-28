@@ -14,6 +14,7 @@ import { Polyline } from 'react-leaflet';
 import { useMap } from 'react-leaflet';
 
 delete L.Icon.Default.prototype._getIconUrl;
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8081";
 
 const GUESSR_SUBMIT_SOUND_PATH = '/sounds/506053__mellau__button-click-2.wav';
 
@@ -97,8 +98,8 @@ const Guessr = () => {
 
         try {
             const endpoint = designMode
-            ? 'http://localhost:8081/guessr/test'
-            : 'http://localhost:8081/guessr/get';
+            ? `${API_BASE}/guessr/test`
+            : `${API_BASE}/guessr/get`;
 
             const res = await fetch(endpoint);
             const data = await res.json();
@@ -213,7 +214,7 @@ const handleSubmission = async (isAuto = false) => {
 
   console.log("Check 1", { position, "Timer": timeLeft });
   console.log("SENDING:", { lat, lng, isAuto });
-    const res = await fetch('http://localhost:8081/guessr/post', {
+    const res = await fetch(`${API_BASE}/guessr/post`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

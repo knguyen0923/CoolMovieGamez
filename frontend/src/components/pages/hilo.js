@@ -7,7 +7,7 @@ import useHiloButtonSound from '../../utilities/useHiloButtonSound';
 import '../../css/hilo.css';
 
 // base url for the backend stuff
-const API_BASE = 'http://localhost:8081';
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8081";
 const MAX_ROUND_SCORE = 5000;
 const SCORE_DECAY_PER_MS = 1;
 const MIN_ROUND_SCORE = 500;

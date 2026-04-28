@@ -23,6 +23,7 @@ function AdminPage() {
   const [game, setGame] = useState("hilo");
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState("dashboard");
+  const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8081";
 
   let user = null;
   try {
@@ -41,7 +42,7 @@ function AdminPage() {
   // fetch users and leaderboards on mount and when game changes
   const fetchUsers = async () => {
     try {
-      const res = await fetch("http://localhost:8081/users");
+      const res = await fetch(`${API_BASE}/users`);
       const data = await res.json();
       setUsers(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -53,8 +54,8 @@ function AdminPage() {
   const fetchAllLeaderboards = async () => {
     try {
       const [hiloRes, guessrRes] = await Promise.all([
-        fetch("http://localhost:8081/leaderboard/hilo"),
-        fetch("http://localhost:8081/leaderboard/guessr"),
+        fetch(`${API_BASE}/leaderboard/hilo`),
+        fetch(`${API_BASE}/leaderboard/guessr`),
       ]);
 
       const hilo = await hiloRes.json();
@@ -125,7 +126,7 @@ function AdminPage() {
   // fetch bell curve data
   const fetchBellCurve = async () => {
     try {
-      const res = await fetch(`http://localhost:8081/leaderboard/${game}`);
+      const res = await fetch(`${API_BASE}/leaderboard/${game}`);
       const data = await res.json();
 
       const scores = (Array.isArray(data) ? data : []).map(
@@ -150,7 +151,7 @@ function AdminPage() {
   const toggleRole = async (u) => {
     const newRole = u.role === "admin" ? "user" : "admin";
 
-    await fetch(`http://localhost:8081/users/${u._id}`, {
+    await fetch(`${API_BASE}/users/${u._id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -167,7 +168,7 @@ function AdminPage() {
     //confirm deletion
     if (!window.confirm("Are you sure you want to delete this user?")) return;
     try {
-      const res = await fetch(`http://localhost:8081/users/${id}`, {
+      const res = await fetch(`${API_BASE}/users/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,

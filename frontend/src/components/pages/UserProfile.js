@@ -3,7 +3,7 @@ import { UserContext } from "../App";
 
 function UserProfile() {
   const { user } = useContext(UserContext);
-
+  const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8081";
   const [profile, setProfile] = useState({
     firstName: "",
     lastName: "",
@@ -16,7 +16,7 @@ function UserProfile() {
   useEffect(() => {
     if (!user) return;
 
-    fetch(`http://localhost:8081/api/userProfile/${user.username}`)
+    fetch(`${API_BASE}/api/userProfile/${user.username}`)
       .then((res) => res.json())
       .then((data) => {
         setProfile({
@@ -40,7 +40,7 @@ function UserProfile() {
 
     try {
       const response = await fetch(
-        `http://localhost:8081/api/userProfile/${user.username}`,
+        `${API_BASE}/api/userProfile/${user.username}`,
         {
           method: "PUT",
           headers: {
