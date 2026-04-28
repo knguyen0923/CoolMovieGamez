@@ -34,7 +34,7 @@ const correctIcon = new L.Icon({
   iconSize: [32, 32],
 });
 
-const designMode = false; // Set to true to enable design mode with hardcoded movie and location
+const designMode = true; // Set to true to enable design mode with hardcoded movie and location
 const ROUND_TIME = 30;
 
 const Guessr = () => {
@@ -77,6 +77,7 @@ const Guessr = () => {
     }, [position]);
 
     const startNewRound = async () => {
+    playButtonSound();
     await fetchRound();
     };
 
@@ -399,10 +400,7 @@ if (!gameStarted) {
     </button>
   ) : (
     <button
-      onClick={() => {
-        playButtonSound();
-        startNewRound();
-      }}
+      onClick={startNewRound}
       className="btn btn-success"
     >
       Next Round
