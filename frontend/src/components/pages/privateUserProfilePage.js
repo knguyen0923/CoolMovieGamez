@@ -190,83 +190,6 @@ const PrivateUserProfile = () => {
     }
   };
 
-  const handleUnequipCosmetics = async () => {
-    try {
-      const formData = new FormData();
-      formData.append("usernameStyle", "");
-      formData.append("avatarBorder", "");
-      formData.append("profileBorder", "");
-
-      const res = await fetch(
-        `${API_BASE}/api/userProfile/${user.username}/shop`,
-        {
-          method: "PUT",
-          body: formData
-        }
-      );
-
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message);
-
-      setProfile((prev) => ({
-        ...prev,
-        usernameStyle: "",
-        avatarBorder: "",
-        profileBorder: ""
-      }));
-
-      setMessage("Cosmetics unequipped");
-      window.dispatchEvent(new Event("cosmeticsUpdated"));
-    } catch (err) {
-      console.error(err);
-      setMessage("Failed to unequip cosmetics");
-    }
-  };
-
-  const handleEquipCosmetics = async () => {
-    try {
-      const formData = new FormData();
-
-      if (profile.ownedCosmetics.includes("gold-avatar-border")) {
-        formData.append("avatarBorder", "gold");
-      }
-
-      if (profile.ownedCosmetics.includes("rainbow-username")) {
-        formData.append("usernameStyle", "rainbow");
-      }
-
-      if (profile.ownedCosmetics.includes("rainbow-profile-border")) {
-        formData.append("profileBorder", "rainbow");
-      }
-
-      const res = await fetch(
-        `${API_BASE}/api/userProfile/${user.username}/shop`,
-        {
-          method: "PUT",
-          body: formData
-        }
-      );
-
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message);
-
-      setProfile((prev) => ({
-        ...prev,
-        usernameStyle: data.profile?.usernameStyle || "",
-        avatarBorder: data.profile?.avatarBorder || "",
-        profileBorder: data.profile?.profileBorder || ""
-      }));
-
-      setMessage("Cosmetics equipped");
-      window.dispatchEvent(new Event("cosmeticsUpdated"));
-    } catch (err) {
-      console.error(err);
-      setMessage("Failed to equip cosmetics");
-    }
-  };
-
   if (!user) {
     return (
       <h2 style={{ padding: "30px", textAlign: "center" }}>
@@ -277,24 +200,21 @@ const PrivateUserProfile = () => {
 
   const imageSrc = buildImageUrl(profile.avatarUrl);
 
-  const hasEquippedCosmetics =
-    profile.usernameStyle !== "" ||
-    profile.avatarBorder !== "" ||
-    profile.profileBorder !== "";
-
-  const hasOwnedCosmetics =
-    profile.ownedCosmetics && profile.ownedCosmetics.length > 0;
-
+  
   const styles = {
     page: {
       minHeight: "100vh",
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
-      backgroundColor: darkMode ? "#121212" : "#f4f4f4",
+      backgroundImage:
+      "url('https://coolmoviegamez-avatars.s3.us-east-2.amazonaws.com/profilebg.jpeg')",
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
       color: darkMode ? "#ffffff" : "#000000",
       transition: "all 0.3s ease"
-    },
+},
     card: {
       background: darkMode ? "#1e1e1e" : "white",
       color: darkMode ? "#ffffff" : "#000000",
@@ -477,13 +397,6 @@ const PrivateUserProfile = () => {
             style={styles.fileInput}
           />
 
-          <label style={styles.label}>Bio</label>
-          <textarea
-            value={profile.bio}
-            onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-            style={styles.textarea}
-          />
-
           <button type="submit" style={styles.saveButton}>
             Save Profile
           </button>
@@ -529,26 +442,6 @@ const PrivateUserProfile = () => {
               Submit New Password
             </button>
           </form>
-        )}
-
-        {hasOwnedCosmetics && !hasEquippedCosmetics && (
-          <button
-            type="button"
-            onClick={handleEquipCosmetics}
-            style={styles.saveButton}
-          >
-            Equip Cosmetics
-          </button>
-        )}
-
-        {hasEquippedCosmetics && (
-          <button
-            type="button"
-            onClick={handleUnequipCosmetics}
-            style={styles.saveButton}
-          >
-            Unequip Cosmetics
-          </button>
         )}
 
         <button onClick={handleDeleteAccount} style={styles.deleteButton}>

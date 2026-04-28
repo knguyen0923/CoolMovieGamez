@@ -124,7 +124,7 @@ export default function Navbar({ darkMode, setDarkMode }) {
   return (
     <ReactNavbar bg="dark" variant="dark">
       <Container>
-        <ReactNavbar.Brand href="/">CoolMovieGamez</ReactNavbar.Brand>
+        <ReactNavbar.Brand href="/LandingPage">CoolMovieGamez</ReactNavbar.Brand>
 
         <Nav className="ms-auto">
           <Nav.Link href="/hilo">Hilo</Nav.Link>

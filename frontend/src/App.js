@@ -5,7 +5,6 @@ import "./index.css";
 
 import Navbar from "./components/navbar";
 import LandingPage from "./components/pages/landingPage";
-import HomePage from "./components/pages/homePage";
 import Login from "./components/pages/loginPage";
 import Signup from "./components/pages/registerPage";
 import PrivateUserProfile from "./components/pages/privateUserProfilePage";
@@ -50,8 +49,7 @@ const App = () => {
         <Navbar darkMode={darkMode} setDarkMode={setDarkMode} />
         <UserContext.Provider value={user}>
           <Routes>
-            <Route exact path="/" element={<LandingPage />} />
-            <Route exact path="/home" element={<HomePage />} />
+            <Route exact path="/LandingPage" element={<LandingPage />} />
             <Route exact path="/login" element={<Login />} />
             <Route exact path="/signup" element={<Signup />} />
             <Route path="/privateUserProfile" element={<PrivateUserProfile />} />

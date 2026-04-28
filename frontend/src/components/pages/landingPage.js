@@ -5,21 +5,36 @@ import getUserInfo from "../../utilities/decodeJwt";
 
 const Landingpage = () => {
   const [user, setUser] = useState(null);
+  const [darkMode, setDarkMode] = useState(
+    localStorage.getItem("darkMode") === "true"
+  );
 
   useEffect(() => {
     const userInfo = getUserInfo();
     setUser(userInfo);
+
+    const checkDarkMode = () => {
+      setDarkMode(localStorage.getItem("darkMode") === "true");
+    };
+
+    window.addEventListener("storage", checkDarkMode);
+    const interval = setInterval(checkDarkMode, 100);
+
+    return () => {
+      window.removeEventListener("storage", checkDarkMode);
+      clearInterval(interval);
+    };
   }, []);
 
   return (
     <div style={styles.page}>
-      <Card style={styles.card}>
+      <Card style={{ ...styles.card, ...(darkMode ? styles.darkCard : {}) }}>
         <Card.Body style={{ textAlign: "center" }}>
-          <Card.Title style={styles.title}>
+          <Card.Title style={{ ...styles.title, color: darkMode ? "white" : "black" }}>
             Welcome to CoolMovieGamez
           </Card.Title>
 
-          <Card.Subtitle style={styles.subtitle}>
+          <Card.Subtitle style={{ ...styles.subtitle, color: darkMode ? "#d6d6d6" : "gray" }}>
             Made by Mario, Nolen, James, Ken
           </Card.Subtitle>
 
@@ -28,8 +43,8 @@ const Landingpage = () => {
             alt="landing"
             style={styles.image}
           />
-          
-          <Card.Text style={styles.text}>
+
+          <Card.Text style={{ ...styles.text, color: darkMode ? "white" : "black" }}>
             {!user
               ? "Sign up or log in to play games, track your score, and compete on the leaderboard."
               : "Start playing games, track your score, and compete on the leaderboard."}
@@ -77,13 +92,15 @@ const styles = {
     boxShadow: "0 0 20px rgba(0,0,0,0.3)",
     backgroundColor: "rgba(255,255,255,0.9)"
   },
+  darkCard: {
+    backgroundColor: "rgba(20,20,20,0.9)"
+  },
   title: {
     fontSize: "28px",
     marginBottom: "10px"
   },
   subtitle: {
-    marginBottom: "15px",
-    color: "gray"
+    marginBottom: "15px"
   },
   image: {
     width: "200px",
