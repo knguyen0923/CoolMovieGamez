@@ -206,32 +206,40 @@ const Hilo = () => {
 
     //just gets a list of random movies w posters from the backend
     const fetchPosterMovies = async (excludedMovieIds = []) => {
-        const response = await fetch(`${API_BASE}/api/hilo/movies`);
+    const response = await fetch(`${API_BASE}/api/hilo/movies`);
 
-        if (!response.ok) {
-            throw new Error(`Server error: ${response.status}`);
+    if (!response.ok) {
+        const text = await response.text();
+        console.error("Server error response:", text);
+        throw new Error(`Server error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (!Array.isArray(data)) {
+        console.error("Invalid API response:", data);
+        throw new Error("Invalid movie data");
+    }
+
+    const seenMovieIds = new Set(excludedMovieIds);
+
+    return data.filter((movie) => {
+        if (!movie.poster || movie.poster.toLowerCase() === 'n/a') {
+            return false;
         }
 
-        const data = await response.json();
-        const seenMovieIds = new Set(excludedMovieIds);
+        if (Number(movie.votecount ?? 0) < 1) {
+            return false;
+        }
 
-        return data.filter((movie) => {
-            if (!movie.poster || movie.poster === 'n/a') {
-                return false;
-            }
+        if (!movie.movieid || seenMovieIds.has(movie.movieid)) {
+            return false;
+        }
 
-            if (Number(movie.votecount || 0) <= 1) {
-                return false;
-            }
-
-            if (!movie.movieid || seenMovieIds.has(movie.movieid)) {
-                return false;
-            }
-
-            seenMovieIds.add(movie.movieid);
-            return true;
-        });
-    };
+        seenMovieIds.add(movie.movieid);
+        return true;
+    });
+};
 
     const beginRound = (nextMovies, nextPool, nextMessage) => {
         setGuessResult(null);
@@ -254,27 +262,32 @@ const Hilo = () => {
 
         try {
             const moviesWithPosters = await fetchPosterMovies();
-            const matchup = moviesWithPosters.slice(0, 2);
-
-            if (matchup.length < 2) {
+            if (!Array.isArray(moviesWithPosters) || moviesWithPosters.length < 2) {
                 throw new Error('Not enough movies with posters were returned.');
             }
+            const matchup = moviesWithPosters.slice(0, 2);
 
             beginRound(
                 matchup,
                 moviesWithPosters.slice(2),
                 'Pick the movie you think has more IMDb votes. Faster correct answers are worth more points.'
-            );
+        );
         } catch (error) {
             console.error('Failed to load HiLo movies:', error);
-            setGameStarted(false);
-            setMovies([]);
-            setMoviePool([]);
 
-            //decent fallback msg if the db/api isnt ready yet
-            setErrorMessage('Could not load movies yet. Make sure the backend is running and movie data has been created.');
-            setStatusMessage('Unable to start a round right now.');
-        } finally{
+            if (!gameStarted) {
+                setGameStarted(false);
+            }
+
+        setMovies([]);
+        setMoviePool([]);
+
+        setErrorMessage(
+            error.message || 
+            'Could not load movies yet. Make sure the backend is running and movie data has been created.'
+        );
+        setStatusMessage('Unable to load a new round. Try again.');
+        } finally {
             setIsLoading(false);
         }
     };

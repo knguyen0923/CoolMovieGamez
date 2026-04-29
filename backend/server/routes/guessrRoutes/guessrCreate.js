@@ -5,11 +5,14 @@ const guessrScore = require('../../models/guessrModel');
 
 router.post('/', async (req, res) => {
 
-    const username = req.body.username;
-    const score = req.body.score;
+    const { username, score } = req.body;
     const game = "guessr";
 
     try {
+      if (!username) {
+            return res.status(400).json({ message: "Username required" });
+        }
+
         const newscore = new guessrScore({
           username:username,
           score:score,
@@ -20,7 +23,7 @@ router.post('/', async (req, res) => {
         res.status(201).json({ message: 'Guessr Score saved successfully' });
       } catch (error) {
         console.error('Error saving score:', error);
-        res.status(400).json({ message: 'Failed to save score' });
+        res.status(500).json({ message: 'Failed to save score' });
   } 
 })
   module.exports = router;

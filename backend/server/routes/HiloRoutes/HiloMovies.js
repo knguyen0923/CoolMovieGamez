@@ -3,7 +3,7 @@ const router = express.Router();
 const movies = require("../../models/apiModel");
 
 // GET 2+ movies for HiLo
-router.get("/", async (req, res) => {
+router.get("/movies", async (req, res) => {
   try {
     const randomMovies = await movies.aggregate([
       { $match: { poster: { $ne: null } } },

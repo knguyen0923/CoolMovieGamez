@@ -13,18 +13,26 @@ function LeaderboardPage() {
     const [loading, setLoading] = useState(true);
     const currentLocation = useLocation();
 
-    //Fetch leaderboard data from backend
+
     const fetchLeaderboard = async () => {
         try { 
-            setLoading(true)
+            setLoading(true);
+
             const response = await fetch(`${API_BASE}/api/leaderboard/${game}`);
             if (!response.ok) {
+                const text = await response.text(); // helps debug backend errors
+                console.error("Server error:", text);
                 throw new Error(`Server error: ${response.status}`);
             }
+
             const data = await response.json();
             setLeaderboard(data);
+
         } catch (error) {
             console.error("Failed to load leaderboard:", error);
+
+            setLeaderboard([]);
+
         } finally {
             setLoading(false);
         }
@@ -34,11 +42,9 @@ function LeaderboardPage() {
 // then poll every 3 seconds to update leaderboard in real-time. 
 // Also refetch when game selection changes.
 useEffect(() => {
-    fetchLeaderboard();
-    }, [game, currentLocation]);
+        fetchLeaderboard();
+    }, [game]);
 
-
-//JSX returned by component (UI Layout)
     return (
         <div className="leaderboard-container">
             <div className="leaderboard-card">
@@ -59,37 +65,42 @@ useEffect(() => {
                     </select>
                 </div>
 
-                <table className="leaderboard-table">
-                    <thead>
-                        <tr>
-                            <th>Rank</th>
-                            <th>Player</th>
-                            <th>Score</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {leaderboard.map((entry, index) => (
-                            <tr
-                                key={entry._id}
-                                className={index < 3 ? "top-player" : ""}
-                            >
-                                <td>
-                                    {index === 0 ? "🥇" :
-                                     index === 1 ? "🥈" :
-                                     index === 2 ? "🥉" :
-                                     index + 1}
-                                </td>
-
-                                <td>{entry.username}</td>
-
-                                <td className="score">
-                                    {entry.score}
-                                </td>
+                {/* 🔥 CHANGE #4: show loading state */}
+                {loading ? (
+                    <p>Loading leaderboard...</p>
+                ) : (
+                    <table className="leaderboard-table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Player</th>
+                                <th>Score</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+
+                        <tbody>
+                            {leaderboard.map((entry, index) => (
+                                <tr
+                                    key={entry._id}
+                                    className={index < 3 ? "top-player" : ""}
+                                >
+                                    <td>
+                                        {index === 0 ? "🥇" :
+                                         index === 1 ? "🥈" :
+                                         index === 2 ? "🥉" :
+                                         index + 1}
+                                    </td>
+
+                                    <td>{entry.username}</td>
+
+                                    <td className="score">
+                                        {entry.score}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
 
             </div>
         </div>

@@ -7,11 +7,7 @@ const HiloScoreModel = require("../../models/HiloScoreModel");
 router.post("/", async (req, res) => {
 
   // reading username from URL param
-  const username = req.params.username;
-
-  // reading data from request body
-  const gamemode = req.body.gamemode;
-  const score = Number(req.body.score);
+  const { username, gamemode, score, game } = req.body;
 
   try {
 
