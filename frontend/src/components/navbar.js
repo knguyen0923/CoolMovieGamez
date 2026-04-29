@@ -69,21 +69,8 @@ export default function Navbar({ darkMode, setDarkMode }) {
     window.removeEventListener("cosmeticsUpdated", syncProfile);
     window.removeEventListener("coinsUpdated", syncProfile);
   };
-}, []);
-    window.addEventListener("cosmeticsUpdated", syncProfile);
-    window.addEventListener("coinsUpdated", syncProfile);
+  , []);
 
-    return () => {
-      window.removeEventListener("cosmeticsUpdated", syncProfile);
-      window.removeEventListener("coinsUpdated", syncProfile);
-    };
-
-  const handleLogout = () => {
-    localStorage.removeItem("accessToken");
-    setUser(null);
-    setProfile(null);
-    window.location.href = "/login";
-  };
 
   const buildImageUrl = (avatarUrl) => {
     if (!avatarUrl) return "https://via.placeholder.com/32";
