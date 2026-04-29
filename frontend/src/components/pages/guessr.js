@@ -14,7 +14,6 @@ import { Polyline } from 'react-leaflet';
 import { useMap } from 'react-leaflet';
 import API_BASE from "../../config";
 delete L.Icon.Default.prototype._getIconUrl;
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8081";
 
 const GUESSR_SUBMIT_SOUND_PATH = '/sounds/506053__mellau__button-click-2.wav';
 
