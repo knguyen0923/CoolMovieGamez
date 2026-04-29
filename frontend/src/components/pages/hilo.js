@@ -157,7 +157,7 @@ const Hilo = () => {
             return;
         }
 
-        const response = await fetch(`${API_BASE}/leaderboard/hilo`, {
+        const response = await fetch(`${API_BASE}/leaderboard/create/hilo`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

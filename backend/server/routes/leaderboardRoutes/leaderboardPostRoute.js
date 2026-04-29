@@ -2,8 +2,8 @@ const express = require("express");
 const router = express.Router();
 const Leaderboard = require("../../models/leaderboardModel");
 
-// POST /leaderboard/:game
-router.post("/:game", async (req, res) => {
+// POST /leaderboard/create/:game
+router.post("/create/:game", async (req, res) => {
   try {
     const game = req.params.game.toLowerCase().trim();
     const username = req.body.username;

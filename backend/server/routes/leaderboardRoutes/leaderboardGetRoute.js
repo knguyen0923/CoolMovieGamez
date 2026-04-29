@@ -2,8 +2,8 @@ const express = require("express");
 const router = express.Router();
 const Leaderboard = require("../../models/leaderboardModel");
 
-// GET /leaderboard/:game
-router.get("/:game", async (req, res) => {
+// GET /leaderboard/get/:game
+router.get("/get/:game", async (req, res) => {
   console.log("Leaderboard GET route hit");
 
   try {

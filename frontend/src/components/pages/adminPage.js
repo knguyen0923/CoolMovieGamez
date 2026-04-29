@@ -54,8 +54,8 @@ function AdminPage() {
   const fetchAllLeaderboards = async () => {
     try {
       const [hiloRes, guessrRes] = await Promise.all([
-        fetch(`${API_BASE}/leaderboard/hilo`),
-        fetch(`${API_BASE}/leaderboard/guessr`),
+        fetch(`${API_BASE}/leaderboard/get/hilo`),
+        fetch(`${API_BASE}/leaderboard/get/guessr`),
       ]);
 
       const hilo = await hiloRes.json();
@@ -126,7 +126,7 @@ function AdminPage() {
   // fetch bell curve data
   const fetchBellCurve = async () => {
     try {
-      const res = await fetch(`${API_BASE}/leaderboard/${game}`);
+      const res = await fetch(`${API_BASE}/leaderboard/get/${game}`);
       const data = await res.json();
 
       const scores = (Array.isArray(data) ? data : []).map(

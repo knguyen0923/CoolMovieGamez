@@ -19,7 +19,7 @@ function LeaderboardPage() {
     const fetchLeaderboard = async () => {
         try { 
             setLoading(true)
-            const response = await fetch(`${API_BASE}/leaderboard/${game}`);
+            const response = await fetch(`${API_BASE}/leaderboard/get/${game}`);
             if (!response.ok) {
                 throw new Error(`Server error: ${response.status}`);
             }
