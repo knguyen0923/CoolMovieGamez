@@ -69,7 +69,6 @@ export default function Navbar({ darkMode, setDarkMode }) {
     window.removeEventListener("cosmeticsUpdated", syncProfile);
     window.removeEventListener("coinsUpdated", syncProfile);
   };
-  , []);
 
 
   const buildImageUrl = (avatarUrl) => {
