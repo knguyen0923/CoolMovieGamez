@@ -98,8 +98,8 @@ const Guessr = () => {
 
         try {
             const endpoint = designMode
-            ? `${API_BASE}/guessr/test`
-            : `${API_BASE}/guessr/get`;
+            ? `${API_BASE}/test`
+            : `${API_BASE}/get`;
 
             const res = await fetch(endpoint);
             if (!res.ok) {
