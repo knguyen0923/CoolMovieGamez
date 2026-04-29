@@ -6,8 +6,8 @@ import Nav from "react-bootstrap/Nav";
 import ReactNavbar from "react-bootstrap/Navbar";
 import { Link } from "react-router-dom";
 import useHiloButtonSound from "../utilities/useHiloButtonSound";
+import API_BASE from "../utilities/config";
 
-const API_BASE = "http://localhost:8081";
 const NAV_TAB_SOUND_PATH = "/sounds/506053__mellau__button-click-2.wav";
 
 export default function Navbar({ darkMode, setDarkMode }) {

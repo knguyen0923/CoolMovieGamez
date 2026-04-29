@@ -1,4 +1,6 @@
-@server = http://localhost:8081
+@local = http://localhost:8081
+@prod = https://coolmoviegamez.onrender.com
+@server = {{prod}}
 
 ### SIGN UP user (creates entry in users collection)
 POST {{server}}/user/signup

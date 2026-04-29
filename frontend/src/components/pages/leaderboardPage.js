@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-
+import API_BASE from "../../config";
 
 function LeaderboardPage() {
-    const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8081";
-
     // State to store leaderboard data
     const [leaderboard, setLeaderboard] = useState([]);
 

@@ -3,10 +3,10 @@ const router = express.Router();
 const movies = require('../../models/apiModel');
 const fetch = require("node-fetch");
 const rounds = new Map(); // In-memory store for active rounds
+import API_BASE from "../config";
 
 const { GoogleGenAI } = require("@google/genai");
 const { FOR_THE_MAP_API } = process.env;
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8081";
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY
 });

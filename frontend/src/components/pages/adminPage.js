@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import getUserInfo from "../../utilities/decodeJwt";
+import API_BASE from "../../config";
 
 import {
   BarChart,
@@ -23,7 +24,7 @@ function AdminPage() {
   const [game, setGame] = useState("hilo");
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState("dashboard");
-  const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8081";
+  
 
   let user = null;
   try {

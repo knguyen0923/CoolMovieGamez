@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useContext } from "react";
 import { UserContext } from "../../App";
-
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8081";
+import API_BASE from "../../config";
 
 const buildImageUrl = (avatarUrl) => {
   if (!avatarUrl) return "https://via.placeholder.com/150";
