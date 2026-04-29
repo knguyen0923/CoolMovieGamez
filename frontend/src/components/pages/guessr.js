@@ -20,7 +20,7 @@ const GUESSR_SUBMIT_SOUND_PATH = '/sounds/506053__mellau__button-click-2.wav';
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
   iconUrl: markerIcon,
-  shadowUrl: markerShadow,z
+  shadowUrl: markerShadow,
 });
 
 const userIcon = new L.Icon({
