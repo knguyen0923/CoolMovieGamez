@@ -47,15 +47,20 @@ export default function Navbar({ darkMode, setDarkMode }) {
       const userInfo = getUserInfo();
       if (!userInfo) return;
 
-      fetch(`${API_BASE}/api/userProfile/${userInfo.username}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setProfile(data.profile || null);
-        })
-        .catch((err) => {
-          console.error("Error syncing navbar profile:", err);
-        });
-    };
+      fetch(`${API_BASE}/api/userProfile/${user.username}`)
+  .then((res) => {
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+    return res.json(); // ✅ KEEP THIS
+  })
+  .then((data) => {
+    setProfile(data.profile || null);
+  })
+  .catch((err) => {
+    console.error("Error loading navbar profile:", err);
+    setProfile(null); // ✅ prevents crash
+  });
 
     window.addEventListener("cosmeticsUpdated", syncProfile);
     window.addEventListener("coinsUpdated", syncProfile);
