@@ -31,7 +31,7 @@ export default function Navbar({ darkMode, setDarkMode }) {
       return;
     }
 
-    fetch(`${API_BASE}/api/userProfile/${user.username}`)
+    fetch(`${API_BASE}/userProfile/${user.username}`)
       .then((res) => res.json())
       .then((data) => {
         setProfile(data.profile || null);
@@ -47,7 +47,7 @@ export default function Navbar({ darkMode, setDarkMode }) {
       const userInfo = getUserInfo();
       if (!userInfo) return;
 
-      fetch(`${API_BASE}/api/userProfile/${user.username}`)
+      fetch(`${API_BASE}/userProfile/${user.username}`)
   .then((res) => {
     if (!res.ok) {
       throw new Error(`HTTP ${res.status}`);
