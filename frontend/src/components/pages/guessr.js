@@ -12,7 +12,7 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { Polyline } from 'react-leaflet';
 import { useMap } from 'react-leaflet';
-import API_BASE from "../../utilities/config";
+import API_BASE from "../../config";
 
 delete L.Icon.Default.prototype._getIconUrl;
 

@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { UserContext } from "../App";
-import API_BASE from "../../utilities/config";
+import API_BASE from "../../config";
 
 function UserProfile() {
   const { user } = useContext(UserContext);
