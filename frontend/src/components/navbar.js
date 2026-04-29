@@ -14,11 +14,17 @@ export default function Navbar({ darkMode, setDarkMode }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const location = useLocation();
+
   const playNavTabSound = useHiloButtonSound({
     soundPath: NAV_TAB_SOUND_PATH,
     volume: 0.45,
     errorLabel: "navbar tab sound"
   });
+
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken");
+    window.location.href = "/login";
+  };
 
   useEffect(() => {
     const userInfo = getUserInfo();
@@ -41,35 +47,36 @@ export default function Navbar({ darkMode, setDarkMode }) {
       });
   }, [user, location]);
 
+  // ✅ FIXED: closed useEffect properly
   useEffect(() => {
-  const syncProfile = () => {
-    const userInfo = getUserInfo();
-    if (!userInfo) return;
+    const syncProfile = () => {
+      const userInfo = getUserInfo();
+      if (!userInfo) return;
 
-    fetch(`${API_BASE}/userProfile/${userInfo.username}`)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        setProfile(data.profile || null);
-      })
-      .catch((err) => {
-        console.error("Error loading navbar profile:", err);
-        setProfile(null);
-      });
-  };
+      fetch(`${API_BASE}/userProfile/${userInfo.username}`)
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+          }
+          return res.json();
+        })
+        .then((data) => {
+          setProfile(data.profile || null);
+        })
+        .catch((err) => {
+          console.error("Error loading navbar profile:", err);
+          setProfile(null);
+        });
+    };
 
-  window.addEventListener("cosmeticsUpdated", syncProfile);
-  window.addEventListener("coinsUpdated", syncProfile);
+    window.addEventListener("cosmeticsUpdated", syncProfile);
+    window.addEventListener("coinsUpdated", syncProfile);
 
-  return () => {
-    window.removeEventListener("cosmeticsUpdated", syncProfile);
-    window.removeEventListener("coinsUpdated", syncProfile);
-  };
-
+    return () => {
+      window.removeEventListener("cosmeticsUpdated", syncProfile);
+      window.removeEventListener("coinsUpdated", syncProfile);
+    };
+  }, []);
 
   const buildImageUrl = (avatarUrl) => {
     if (!avatarUrl) return "https://via.placeholder.com/32";
@@ -150,10 +157,7 @@ export default function Navbar({ darkMode, setDarkMode }) {
                 Shop
               </Nav.Link>
 
-              {/* 👤 Profile + 💰 Coins */}
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                
-                {/* Profile (clickable) */}
                 <Nav.Link as={Link} to="/privateUserProfile" style={{ padding: "0" }} onClick={playNavTabSound}>
                   <div style={rainbowContainer}>
                     <img
@@ -165,7 +169,6 @@ export default function Navbar({ darkMode, setDarkMode }) {
                   </div>
                 </Nav.Link>
 
-                {/* Coins (not clickable) */}
                 <div
                   style={{
                     display: "flex",
@@ -186,7 +189,6 @@ export default function Navbar({ darkMode, setDarkMode }) {
                   />
                   <span>{profile?.coins ?? 0}</span>
                 </div>
-
               </div>
 
               <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
