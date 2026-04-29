@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import API_BASE from "../../config";
+import API_BASE from "../../utilities/config";
 
 function LeaderboardPage() {
     // State to store leaderboard data

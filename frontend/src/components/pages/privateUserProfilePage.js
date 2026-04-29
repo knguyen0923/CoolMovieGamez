@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from "react";
 import { UserContext } from "../../App";
-import API_BASE from "../../config";
+import API_BASE from "../../utilities/config";
 
 const buildImageUrl = (avatarUrl) => {
   if (!avatarUrl) return "https://via.placeholder.com/150";

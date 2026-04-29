@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import getUserInfo from "../../utilities/decodeJwt";
-import API_BASE from "../../config";
+import API_BASE from "../../utilities/config";
 
 import {
   BarChart,
