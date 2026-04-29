@@ -102,6 +102,11 @@ const Guessr = () => {
             : `${API_BASE}/guessr/get`;
 
             const res = await fetch(endpoint);
+            if (!res.ok) {
+              const text = await res.text();
+              console.error("Server error:", text);
+              throw new Error("Failed request");
+            }
             const data = await res.json();
             setMovie(data);
             roundIdRef.current = data.roundId;
@@ -214,7 +219,7 @@ const handleSubmission = async (isAuto = false) => {
 
   console.log("Check 1", { position, "Timer": timeLeft });
   console.log("SENDING:", { lat, lng, isAuto });
-    const res = await fetch(`${API_BASE}/api/guessr/post`, {
+    const res = await fetch(`${API_BASE}/guessr/post`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -227,7 +232,6 @@ const handleSubmission = async (isAuto = false) => {
         timedOut: isAuto,
         })
     });
- 
     const truedata = await res.json();
     setResult(truedata);
 
