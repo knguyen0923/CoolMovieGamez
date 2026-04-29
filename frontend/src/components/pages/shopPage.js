@@ -1,8 +1,8 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { UserContext } from "../../App";
 import useHiloButtonSound from "../../utilities/useHiloButtonSound";
+import API_BASE from "../../config";
 
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8081";
 const SHOP_PURCHASE_SOUND_PATH = "/sounds/845357__etheraudio__retro-coin-thing.wav";
 
 const ShopPage = () => {

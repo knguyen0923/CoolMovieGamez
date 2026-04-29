@@ -1,9 +1,9 @@
 import React, { useContext, useEffect, useState } from "react";
 import { UserContext } from "../App";
+import API_BASE from "../../config";
 
 function UserProfile() {
   const { user } = useContext(UserContext);
-  const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8081";
   const [profile, setProfile] = useState({
     firstName: "",
     lastName: "",

@@ -3,10 +3,10 @@ import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
+import API_BASE from "../../config";
 
 const PRIMARY_COLOR = "#cc5c99";
 const SECONDARY_COLOR = "#0c0c1f";
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8081";
 const url = `${API_BASE}/users/signup`;
 
 const Register = () => {
