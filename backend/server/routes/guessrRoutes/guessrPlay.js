@@ -56,7 +56,7 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 //~~~~~~~~~~~~~~updates leaderboard and coins on game complete~~~~~~~~~~~~~~`
 async function submitElsewhere(username, score, coins) {
 
-  await fetch(`${API_BASE}/leaderboard/guessr`, {
+  await fetch(`${API_BASE}/leaderboard/update/guessr`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json'
