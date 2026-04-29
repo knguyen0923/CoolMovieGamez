@@ -4,7 +4,7 @@ const router = express.Router();
 const HiloScoreModel = require("../../models/HiloScoreModel");
 
 // making the post route
-router.post("/:username", async (req, res) => {
+router.post("/", async (req, res) => {
 
   // reading username from URL param
   const username = req.params.username;

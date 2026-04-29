@@ -3,7 +3,7 @@ const router = express.Router();
 const apiData = require('../../models/apiModel');
 
 //mounted to base url .../api
-router.get('/get', async (req, res) => {
+router.get('/', async (req, res) => {
     const movieid = req.params.movieid;
 
     try {   

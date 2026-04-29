@@ -157,8 +157,8 @@ const Hilo = () => {
             return;
         }
 
-        const response = await fetch(`${API_BASE}/leaderboard/create/hilo`, {
-            method: 'POST',
+        const response = await fetch(`${API_BASE}/api/leaderboard/hilo`, {
+            method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -207,7 +207,7 @@ const Hilo = () => {
 
     //just gets a list of random movies w posters from the backend
     const fetchPosterMovies = async (excludedMovieIds = []) => {
-        const response = await fetch(`${API_BASE}/api/get`);
+        const response = await fetch(`${API_BASE}/api/hilo`);
 
         if (!response.ok) {
             throw new Error(`Server error: ${response.status}`);

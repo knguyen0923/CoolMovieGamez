@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const apiData = require('../../models/apiModel')
 
-router.delete('/deleteAll', async (req, res) => {
+router.delete('/', async (req, res) => {
   try {
     const result = await apiData.deleteMany({});
 

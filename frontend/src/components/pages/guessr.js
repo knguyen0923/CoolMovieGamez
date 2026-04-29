@@ -215,7 +215,7 @@ const handleSubmission = async (isAuto = false) => {
 
   console.log("Check 1", { position, "Timer": timeLeft });
   console.log("SENDING:", { lat, lng, isAuto });
-    const res = await fetch(`${API_BASE}/guessr/post`, {
+    const res = await fetch(`${API_BASE}/api/guessr/post`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

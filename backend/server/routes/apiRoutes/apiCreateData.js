@@ -4,7 +4,7 @@ const axios = require("axios");
 
 const apiData = require('../../models/apiModel');
 
-router.put('/createData', async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const response = await axios('https://api.imdbapi.dev/titles?types=MOVIE');
     const movies = response.data.titles;

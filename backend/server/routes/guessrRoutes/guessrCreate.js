@@ -3,7 +3,7 @@ const router = express.Router();
 
 const guessrScore = require('../../models/guessrModel');
 
-router.post('/guessrCreate', async (req, res) => {
+router.post('/', async (req, res) => {
 
     const username = req.body.username;
     const score = req.body.score;

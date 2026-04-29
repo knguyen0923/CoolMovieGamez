@@ -3,7 +3,7 @@ const router = express.Router();
 const Leaderboard = require("../../models/leaderboardModel");
 
 // DELETE /leaderboard/clear - Clear all entries from the leaderboard
-router.delete("/clear", async (req, res) => {
+router.delete("/", async (req, res) => {
   try {
     const result = await Leaderboard.deleteMany({});
     return res.status(200).json({

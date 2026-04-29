@@ -3,7 +3,7 @@ const router = express.Router();
 const Leaderboard = require("../../models/leaderboardModel");
 
 // PUT /leaderboard/:game
-router.put("/update/:game", async (req, res) => {
+router.put("/:game", async (req, res) => {
   try {
     const game = req.params.game.toLowerCase().trim();
     const username = req.body.username;

@@ -54,8 +54,8 @@ function AdminPage() {
   const fetchAllLeaderboards = async () => {
     try {
       const [hiloRes, guessrRes] = await Promise.all([
-        fetch(`${API_BASE}/leaderboard/get/hilo`),
-        fetch(`${API_BASE}/leaderboard/get/guessr`),
+        fetch(`${API_BASE}/api/leaderboard/hilo`),
+        fetch(`${API_BASE}/api/leaderboard/guessr`),
       ]);
 
       const hilo = await hiloRes.json();
@@ -126,7 +126,7 @@ function AdminPage() {
   // fetch bell curve data
   const fetchBellCurve = async () => {
     try {
-      const res = await fetch(`${API_BASE}/leaderboard/get/${game}`);
+      const res = await fetch(`${API_BASE}/api/leaderboard/${game}`);
       const data = await res.json();
 
       const scores = (Array.isArray(data) ? data : []).map(
@@ -151,7 +151,7 @@ function AdminPage() {
   const toggleRole = async (u) => {
     const newRole = u.role === "admin" ? "user" : "admin";
 
-    await fetch(`${API_BASE}/users/${u._id}`, {
+    await fetch(`${API_BASE}/api/users/${u._id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -168,7 +168,7 @@ function AdminPage() {
     //confirm deletion
     if (!window.confirm("Are you sure you want to delete this user?")) return;
     try {
-      const res = await fetch(`${API_BASE}/users/${id}`, {
+      const res = await fetch(`${API_BASE}/api/users/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
