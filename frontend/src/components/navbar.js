@@ -41,27 +41,35 @@ export default function Navbar({ darkMode, setDarkMode }) {
       });
   }, [user, location]);
 
-  // 🔥 live updates (cosmetics + coins)
   useEffect(() => {
-    const syncProfile = () => {
-      const userInfo = getUserInfo();
-      if (!userInfo) return;
+  const syncProfile = () => {
+    const userInfo = getUserInfo();
+    if (!userInfo) return;
 
-      fetch(`${API_BASE}/userProfile/${user.username}`)
-  .then((res) => {
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-    return res.json(); // ✅ KEEP THIS
-  })
-  .then((data) => {
-    setProfile(data.profile || null);
-  })
-  .catch((err) => {
-    console.error("Error loading navbar profile:", err);
-    setProfile(null); // ✅ prevents crash
-  });
+    fetch(`${API_BASE}/userProfile/${userInfo.username}`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setProfile(data.profile || null);
+      })
+      .catch((err) => {
+        console.error("Error loading navbar profile:", err);
+        setProfile(null);
+      });
+  };
 
+  window.addEventListener("cosmeticsUpdated", syncProfile);
+  window.addEventListener("coinsUpdated", syncProfile);
+
+  return () => {
+    window.removeEventListener("cosmeticsUpdated", syncProfile);
+    window.removeEventListener("coinsUpdated", syncProfile);
+  };
+}, []);
     window.addEventListener("cosmeticsUpdated", syncProfile);
     window.addEventListener("coinsUpdated", syncProfile);
 
@@ -69,7 +77,6 @@ export default function Navbar({ darkMode, setDarkMode }) {
       window.removeEventListener("cosmeticsUpdated", syncProfile);
       window.removeEventListener("coinsUpdated", syncProfile);
     };
-  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
