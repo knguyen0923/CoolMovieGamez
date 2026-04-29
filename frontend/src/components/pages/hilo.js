@@ -206,7 +206,7 @@ const Hilo = () => {
 
     //just gets a list of random movies w posters from the backend
     const fetchPosterMovies = async (excludedMovieIds = []) => {
-        const response = await fetch(`${API_BASE}/api/hilo`);
+        const response = await fetch(`${API_BASE}/api/hilo/movies`);
 
         if (!response.ok) {
             throw new Error(`Server error: ${response.status}`);

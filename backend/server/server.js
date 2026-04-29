@@ -26,6 +26,7 @@ const guessrGetLeaderboard = require('./routes/guessrRoutes/guessrGetLeaderboard
 // HILO ROUTES
 const hiloCreateRoute = require('./routes/HiloRoutes/HiloCreateRoute');
 const hiloGetRoute = require('./routes/HiloRoutes/HiloGetRoute');
+const hiloMoviesRoute = require('./routes/HiloRoutes/HiloMovies');
 
 // LEADERBOARD ROUTES
 const leaderboardPostRoute = require('./routes/leaderboardRoutes/leaderboardPostRoute');
@@ -83,6 +84,7 @@ app.use('/api/guessr', guessrPlay);
 // HILO
 app.use('/api/hilo', hiloCreateRoute);
 app.use('/api/hilo', hiloGetRoute);
+app.use('/api/hilo', hiloMoviesRoute);
 
 // LEADERBOARD
 app.use('/api/leaderboard', leaderboardPostRoute);
