@@ -203,6 +203,8 @@ const handleSubmission = async (isAuto = false) => {
   if (hasSubmittedRef.current) return;
   hasSubmittedRef.current = true;
 
+  playButtonSound();
+
   clearInterval(timerRef.current);
   timerRef.current = null;
 
@@ -398,10 +400,7 @@ if (!gameStarted) {
     </button>
   ) : (
     <button
-      onClick={() => {
-        playButtonSound();
-        startNewRound();
-      }}
+      onClick={startNewRound}
       className="btn btn-success"
     >
       Next Round
