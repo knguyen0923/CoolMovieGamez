@@ -56,11 +56,14 @@ dbConnection();
 app.use(cors({
   origin: [
     "https://cool-movie-gamez.vercel.app",
-    "https://cool-movie-gamez-git-main-knguyen0923s-projects.vercel.app",
     /https:\/\/cool-movie-gamez.*\.vercel\.app/
   ],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }));
+
+app.options("*", cors());
 
 // BODY PARSING
 app.use(express.json());
