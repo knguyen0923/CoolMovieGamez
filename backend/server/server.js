@@ -5,7 +5,6 @@ const app = express();
 const cors = require('cors');
 const path = require("path");
 
-
 // USER ROUTES
 const loginRoute = require('./routes/userRoutes/userLogin');
 const getAllUsersRoute = require('./routes/userRoutes/userGetAllUsers');
@@ -53,6 +52,7 @@ const SERVER_PORT = process.env.PORT || 8081;
 // Connect DB
 dbConnection();
 
+// ✅ CORS (correct)
 app.use(cors({
   origin: [
     "https://cool-movie-gamez.vercel.app",
@@ -63,7 +63,10 @@ app.use(cors({
   credentials: true
 }));
 
-app.options("*", cors());
+// ✅ HANDLE PREFLIGHT (IMPORTANT)
+app.options("*", (req, res) => {
+  res.sendStatus(200);
+});
 
 // BODY PARSING
 app.use(express.json());
@@ -72,9 +75,7 @@ app.use(express.urlencoded({ extended: true }));
 // STATIC FILES
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-
-//STANDARDIZE ALL ROUTES TO /api
-
+// ROUTES
 app.use('/api/users', loginRoute);
 app.use('/api/users', registerRoute);
 app.use('/api/users', getAllUsersRoute);
@@ -107,9 +108,7 @@ app.use('/api/data', apiCreateData);
 app.use('/api/data', apiGet);
 app.use('/api/data', apiDeleteAll);
 
-// =========================
 // START SERVER
-// =========================
 app.listen(SERVER_PORT, () => {
   console.log(`🚀 Backend running on port ${SERVER_PORT}`);
 });
