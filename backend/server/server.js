@@ -54,7 +54,11 @@ const SERVER_PORT = process.env.PORT || 8081;
 dbConnection();
 
 app.use(cors({
-  origin: "https://cool-movie-gamez.vercel.app",
+  origin: [
+    "https://cool-movie-gamez.vercel.app",
+    "https://cool-movie-gamez-git-main-knguyen0923s-projects.vercel.app",
+    /https:\/\/cool-movie-gamez.*\.vercel\.app/
+  ],
   credentials: true
 }));
 
