@@ -1,6 +1,13 @@
 import React from "react";
 import Card from "react-bootstrap/Card";
-import { MapContainer, TileLayer, Marker, useMapEvents, Polyline, useMap } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  useMapEvents,
+  Polyline,
+  useMap,
+} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "../../css/guessr.css";
 import getUserInfo from "../../utilities/decodeJwt";
@@ -70,14 +77,14 @@ const Guessr = () => {
   }, []);
 
   React.useEffect(() => {
-    return () => clearInterval(timerRef.current);
+    return () => {
+      clearInterval(timerRef.current);
+    };
   }, []);
 
   React.useEffect(() => {
     positionRef.current = position;
   }, [position]);
-
-  //  Backend routes are mounted in server.js 
 
   const startNewRound = async () => {
     playButtonSound();
@@ -94,15 +101,16 @@ const Guessr = () => {
     timerRef.current = null;
 
     hasSubmittedRef.current = false;
+    timeLeftRef.current = ROUND_TIME;
 
     setLoading(true);
     setErrorMessage("");
     setResult(null);
     setPosition(null);
+    setTimeLeft(ROUND_TIME);
 
-    try {       
-      //  Fixed new round endpoint.
-
+    try {
+      // CHANGE: correct backend route is /api/guessr/get
       const endpoint = designMode
         ? `${API_BASE}/api/guessr/test`
         : `${API_BASE}/api/guessr/get`;
@@ -117,11 +125,7 @@ const Guessr = () => {
 
       const data = await res.json();
 
-
-     // Added safety check so the page does not silently break
-     // if backend returns an error object instead of movie data.
-    
-      if (!data || (!data.movie && !data.title && !data.poster)) {
+      if (!data || !data.poster || !data.roundId) {
         console.error("Invalid Guessr round data:", data);
         throw new Error("Invalid Guessr round data");
       }
@@ -173,6 +177,7 @@ const Guessr = () => {
       if (timeLeftRef.current <= 0) {
         clearInterval(timerRef.current);
         timerRef.current = null;
+        timeLeftRef.current = 0;
         setTimeLeft(0);
         handleSubmission(true);
         return;
@@ -202,7 +207,7 @@ const Guessr = () => {
   const ClickHandler = () => {
     useMapEvents({
       click(e) {
-        if (results) return;
+        if (results || loading) return;
 
         setPosition({
           lat: e.latlng.lat,
@@ -227,8 +232,7 @@ const Guessr = () => {
     const lng = isAuto ? null : currentPosition?.lng;
 
     try {
-
-      //  Fixed submit endpoint.
+      // CHANGE: correct backend route is /api/guessr/post
       const res = await fetch(`${API_BASE}/api/guessr/post`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -336,11 +340,7 @@ const Guessr = () => {
             movie.poster && (
               <Card style={{ height: "100%" }}>
                 <Card.Body className="text-center">
-                  {/* CHANGE #5:
-                      Supports both data.movie and data.title just in case
-                      backend returns either field name.
-                  */}
-                  <Card.Title>{movie.movie || movie.title}</Card.Title>
+                  <Card.Title>{movie.movie || movie.title || "Movie"}</Card.Title>
 
                   <h5 style={{ color: timeLeft < 6 ? "red" : "grey" }}>
                     Time Left: {timeLeft}s
@@ -392,7 +392,7 @@ const Guessr = () => {
 
                 <p>Distance: {results.distance ?? "Unknown"} km</p>
 
-                <p>TIMER BONUS: {results.timerbonus}</p>
+                <p>Timer Bonus: {results.timerbonus ?? 0}</p>
 
                 <p>
                   Total Score: {totalScore} | Round: {round}
