@@ -77,24 +77,7 @@ const Guessr = () => {
     positionRef.current = position;
   }, [position]);
 
-  /*
-    CHANGE #1:
-    Backend routes are mounted in server.js like this:
-    app.use("/api/guessr", guessrCreateRoute);
-    app.use("/api/guessr", guessrGetRoute);
-    app.use("/api/guessr", guessrPlay);
-
-    So frontend Guessr URLs must start with:
-    `${API_BASE}/api/guessr/...`
-
-    OLD broken examples:
-    `${API_BASE}/get`
-    `${API_BASE}/guessr/post`
-
-    NEW correct examples:
-    `${API_BASE}/api/guessr/get`
-    `${API_BASE}/api/guessr/post`
-  */
+  //  Backend routes are mounted in server.js 
 
   const startNewRound = async () => {
     playButtonSound();
@@ -117,17 +100,9 @@ const Guessr = () => {
     setResult(null);
     setPosition(null);
 
-    try {
-      /*
-        CHANGE #2:
-        Fixed new round endpoint.
+    try {       
+      //  Fixed new round endpoint.
 
-        OLD:
-        designMode ? `${API_BASE}/test` : `${API_BASE}/get`
-
-        NEW:
-        designMode ? `${API_BASE}/api/guessr/test` : `${API_BASE}/api/guessr/get`
-      */
       const endpoint = designMode
         ? `${API_BASE}/api/guessr/test`
         : `${API_BASE}/api/guessr/get`;
@@ -142,11 +117,10 @@ const Guessr = () => {
 
       const data = await res.json();
 
-      /*
-        CHANGE #3:
-        Added safety check so the page does not silently break
-        if backend returns an error object instead of movie data.
-      */
+
+     // Added safety check so the page does not silently break
+     // if backend returns an error object instead of movie data.
+    
       if (!data || (!data.movie && !data.title && !data.poster)) {
         console.error("Invalid Guessr round data:", data);
         throw new Error("Invalid Guessr round data");
@@ -253,16 +227,8 @@ const Guessr = () => {
     const lng = isAuto ? null : currentPosition?.lng;
 
     try {
-      /*
-        CHANGE #4:
-        Fixed submit endpoint.
 
-        OLD:
-        `${API_BASE}/guessr/post`
-
-        NEW:
-        `${API_BASE}/api/guessr/post`
-      */
+      //  Fixed submit endpoint.
       const res = await fetch(`${API_BASE}/api/guessr/post`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

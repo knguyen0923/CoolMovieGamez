@@ -4,14 +4,14 @@ const movies = require("../../models/apiModel");
 const fetch = require("node-fetch");
 const rounds = new Map(); // In-memory store for active rounds
 const BASE_URL =
-  process.env.BASE_URL || "https://cool-movie-gamez.onrender.com";
+  process.env.BASE_URL || "https://coolmoviegamez.onrender.com";
 const { GoogleGenAI } = require("@google/genai");
 const { FOR_THE_MAP_API } = process.env;
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
-//~~~~~~~~~~~~~~~~~searches nominatim for city name, returns coordinates
+// searches nominatim for city name, returns coordinates
 async function getCoordinates(cityName) {
   console.log("Getting coordinates for city:", cityName);
   const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}`;
@@ -33,7 +33,7 @@ async function getCoordinates(cityName) {
   };
 }
 
-//~~~~~~~~~~~~~~~~~~~~calculates distance for coordinates for scoring
+// calculates distance for coordinates for scoring
 function haversineDistance(lat1, lon1, lat2, lon2) {
   const R = 6371; // Earth radius in km
 
@@ -51,7 +51,7 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
   return R * c; // distance in km
 }
 
-//~~~~~~~~~~~~~~updates leaderboard and coins on game complete~~~~~~~~~~~~~~`
+// updates leaderboard and coins on game complete
 async function submitElsewhere(username, score, coins) {
   try {
     await fetch(`${BASE_URL}/api/leaderboard/guessr`, {
@@ -76,7 +76,7 @@ async function submitElsewhere(username, score, coins) {
   }
 }
 
-//~~~~~~~~~~~~~~~~~generates new round, checks if answers are valid, max retries 5
+// generates new round, checks if answers are valid, max retries 5
 async function generateValidRound(maxRetries = 3) {
   for (let i = 0; i < maxRetries; i++) {
     try {
@@ -120,7 +120,7 @@ async function generateValidRound(maxRetries = 3) {
   throw new Error("Failed to generate valid round after retries");
 }
 
-//~~~~~~~~~~~~~~~~~~~creates round id, returns movie and poster to FE
+// creates round id, returns movie and poster to FE
 router.get("/get", async (req, res) => {
   try {
     const round = await generateValidRound();
@@ -147,7 +147,7 @@ router.get("/get", async (req, res) => {
   }
 });
 
-//~~~~~~~~~~~~~~used for testing, returns hardcoded movie and location for design mode
+// used for testing, returns hardcoded movie and location for design mode
 router.get("/test", async (req, res) => {
   try {
     const movie = await movies.aggregate([{ $sample: { size: 1 } }]);
@@ -170,7 +170,7 @@ router.get("/test", async (req, res) => {
   }
 });
 
-//~~~~~~~~~~~~~~~~~~~~~ normal game logic
+// normal game logic
 router.post("/post", async (req, res) => {
   try {
     const { username, lat, lng, timer, roundId, timedOut } = req.body;

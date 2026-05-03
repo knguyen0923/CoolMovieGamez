@@ -43,10 +43,7 @@ function AdminPage() {
     fetchAllLeaderboards();
   }, [game]);
 
-  // CHANGE #1:
   // Fixed old API route.
-  // OLD: `${API_BASE}/users`
-  // NEW: `${API_BASE}/api/users`
   const fetchUsers = async () => {
     try {
       const res = await fetch(`${API_BASE}/api/users`);
@@ -63,10 +60,7 @@ function AdminPage() {
     }
   };
 
-  // CHANGE #2:
   // Fixed leaderboard API routes.
-  // OLD: `${API_BASE}/leaderboard/hilo`
-  // NEW: `${API_BASE}/api/leaderboard/hilo`
   const fetchAllLeaderboards = async () => {
     try {
       const [hiloRes, guessrRes] = await Promise.all([
@@ -94,7 +88,6 @@ function AdminPage() {
     }
   };
 
-  // CHANGE #3:
   // Safer score binning for the bell curve.
   const buildBellCurveData = (scores) => {
     const cleanScores = scores
@@ -128,9 +121,7 @@ function AdminPage() {
       .sort((a, b) => a.binStart - b.binStart);
   };
 
-  // CHANGE #4:
   // Actually creates the gaussian line values.
-  // Your old code defined this function but did not apply it.
   const buildGaussianCurve = (scores, bins) => {
     const cleanScores = scores
       .map((score) => Number(score))
@@ -174,7 +165,6 @@ function AdminPage() {
     }));
   };
 
-  // CHANGE #5:
   // Fixed bell curve fetch route and applies gaussian data.
   const fetchBellCurve = async () => {
     try {
@@ -200,10 +190,7 @@ function AdminPage() {
     }
   };
 
-  // CHANGE #6:
   // Fixed update user route.
-  // OLD: `${API_BASE}/users/${u._id}`
-  // NEW: `${API_BASE}/api/users/${u._id}`
   const toggleRole = async (u) => {
     const newRole = u.role === "admin" ? "user" : "admin";
 
@@ -227,10 +214,7 @@ function AdminPage() {
     }
   };
 
-  // CHANGE #7:
   // Fixed delete user route.
-  // OLD: `${API_BASE}/users/${id}`
-  // NEW: `${API_BASE}/api/users/${id}`
   const deleteUser = async (id) => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
 
