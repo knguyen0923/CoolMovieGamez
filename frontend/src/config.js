@@ -1,3 +1,3 @@
-const API_BASE = "https://cool-movie-gamez.onrender.com";
+const API_BASE = "https://coolmoviegamez.onrender.com";
 
 export default API_BASE;
