@@ -18,70 +18,113 @@ export default function Navbar({ darkMode, setDarkMode }) {
   const playNavTabSound = useHiloButtonSound({
     soundPath: NAV_TAB_SOUND_PATH,
     volume: 0.45,
-    errorLabel: "navbar tab sound"
+    errorLabel: "navbar tab sound",
   });
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
+    setUser(null);
+    setProfile(null);
     window.location.href = "/login";
   };
 
-  useEffect(() => {
-    const userInfo = getUserInfo();
-    setUser(userInfo);
-  }, [location]);
+  /*
+    CHANGE #1:
+    Created one reusable profile loader instead of repeating fetch logic twice.
 
-  useEffect(() => {
-    if (!user) {
+    CHANGE #2:
+    Fixed the broken URL:
+    OLD: `${API_BASE}/userProfile/${username}`
+    NEW: `${API_BASE}/api/userProfile/${username}`
+
+    Your backend mounts the route as:
+    app.use("/api/userProfile", userProfileRoute);
+  */
+  const loadNavbarProfile = async (username) => {
+    if (!username) {
       setProfile(null);
       return;
     }
 
-    fetch(`${API_BASE}/userProfile/${user.username}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setProfile(data.profile || null);
-      })
-      .catch((err) => {
-        console.error("Error loading navbar profile:", err);
-      });
-  }, [user, location]);
+    try {
+      const response = await fetch(`${API_BASE}/api/userProfile/${username}`);
 
-  // ✅ FIXED: closed useEffect properly
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      /*
+        CHANGE #3:
+        Your backend returns the profile inside data.profile,
+        so Navbar must use data.profile instead of data.avatarUrl directly.
+      */
+      setProfile(data.profile || null);
+    } catch (err) {
+      console.error("Error loading navbar profile:", err);
+      setProfile(null);
+    }
+  };
+
+  /*
+    CHANGE #4:
+    Reload the logged-in user whenever the route changes.
+    This keeps the Navbar updated after login/logout/navigation.
+  */
+  useEffect(() => {
+    const userInfo = getUserInfo();
+    setUser(userInfo);
+
+    if (userInfo?.username) {
+      loadNavbarProfile(userInfo.username);
+    } else {
+      setProfile(null);
+    }
+  }, [location]);
+
+  /*
+    CHANGE #5:
+    Listen for profile-related updates from Shop/Profile/HiLo.
+    When cosmetics or coins change, the Navbar reloads the profile.
+  */
   useEffect(() => {
     const syncProfile = () => {
       const userInfo = getUserInfo();
-      if (!userInfo) return;
 
-      fetch(`${API_BASE}/userProfile/${userInfo.username}`)
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error(`HTTP ${res.status}`);
-          }
-          return res.json();
-        })
-        .then((data) => {
-          setProfile(data.profile || null);
-        })
-        .catch((err) => {
-          console.error("Error loading navbar profile:", err);
-          setProfile(null);
-        });
+      if (!userInfo?.username) {
+        setProfile(null);
+        return;
+      }
+
+      setUser(userInfo);
+      loadNavbarProfile(userInfo.username);
     };
 
     window.addEventListener("cosmeticsUpdated", syncProfile);
     window.addEventListener("coinsUpdated", syncProfile);
+    window.addEventListener("profileUpdated", syncProfile);
 
     return () => {
       window.removeEventListener("cosmeticsUpdated", syncProfile);
       window.removeEventListener("coinsUpdated", syncProfile);
+      window.removeEventListener("profileUpdated", syncProfile);
     };
   }, []);
 
+  /*
+    CHANGE #6:
+    Build the correct image URL depending on whether avatarUrl is:
+    - already a full URL, like S3
+    - a backend uploads path, like /uploads/image.png
+    - just a filename
+  */
   const buildImageUrl = (avatarUrl) => {
     if (!avatarUrl) return "https://via.placeholder.com/32";
 
-    if (avatarUrl.startsWith("http")) return avatarUrl;
+    if (avatarUrl.startsWith("http")) {
+      return avatarUrl;
+    }
 
     if (avatarUrl.startsWith("/uploads/")) {
       return `${API_BASE}${avatarUrl}`;
@@ -97,7 +140,7 @@ export default function Navbar({ darkMode, setDarkMode }) {
             "linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
-          fontWeight: "bold"
+          fontWeight: "bold",
         }
       : {};
 
@@ -112,7 +155,7 @@ export default function Navbar({ darkMode, setDarkMode }) {
         ? "2px solid gold"
         : darkMode
         ? "2px solid #888"
-        : "2px solid #ccc"
+        : "2px solid #ccc",
   };
 
   const rainbowContainer =
@@ -126,11 +169,11 @@ export default function Navbar({ darkMode, setDarkMode }) {
           backgroundOrigin: "border-box",
           backgroundClip: "padding-box, border-box",
           display: "flex",
-          alignItems: "center"
+          alignItems: "center",
         }
       : {
           display: "flex",
-          alignItems: "center"
+          alignItems: "center",
         };
 
   return (
@@ -141,12 +184,25 @@ export default function Navbar({ darkMode, setDarkMode }) {
         </ReactNavbar.Brand>
 
         <Nav className="ms-auto">
-          <Nav.Link as={Link} to="/hilo" onClick={playNavTabSound}>Hilo</Nav.Link>
-          <Nav.Link as={Link} to="/guessr" onClick={playNavTabSound}>Guessr</Nav.Link>
-          <Nav.Link as={Link} to="/leaderboard" onClick={playNavTabSound}>Leaderboard</Nav.Link>
+          <Nav.Link as={Link} to="/hilo" onClick={playNavTabSound}>
+            Hilo
+          </Nav.Link>
+
+          <Nav.Link as={Link} to="/guessr" onClick={playNavTabSound}>
+            Guessr
+          </Nav.Link>
+
+          <Nav.Link as={Link} to="/leaderboard" onClick={playNavTabSound}>
+            Leaderboard
+          </Nav.Link>
 
           {user?.role === "admin" && (
-            <Nav.Link as={Link} to="/admin" className="text-danger fw-bold" onClick={playNavTabSound}>
+            <Nav.Link
+              as={Link}
+              to="/admin"
+              className="text-danger fw-bold"
+              onClick={playNavTabSound}
+            >
               Admin
             </Nav.Link>
           )}
@@ -158,13 +214,19 @@ export default function Navbar({ darkMode, setDarkMode }) {
               </Nav.Link>
 
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <Nav.Link as={Link} to="/privateUserProfile" style={{ padding: "0" }} onClick={playNavTabSound}>
+                <Nav.Link
+                  as={Link}
+                  to="/privateUserProfile"
+                  style={{ padding: "0" }}
+                  onClick={playNavTabSound}
+                >
                   <div style={rainbowContainer}>
                     <img
                       src={buildImageUrl(profile?.avatarUrl)}
                       alt="profile"
                       style={avatarStyle}
                     />
+
                     <span style={rainbowText}>{user.username}</span>
                   </div>
                 </Nav.Link>
@@ -179,7 +241,7 @@ export default function Navbar({ darkMode, setDarkMode }) {
                     backgroundColor: darkMode ? "#2a2a2a" : "#f1f1f1",
                     color: darkMode ? "#fff" : "#000",
                     fontSize: "14px",
-                    boxShadow: "0 0 6px rgba(255, 215, 0, 0.5)"
+                    boxShadow: "0 0 6px rgba(255, 215, 0, 0.5)",
                   }}
                 >
                   <img
@@ -187,6 +249,7 @@ export default function Navbar({ darkMode, setDarkMode }) {
                     alt="coin"
                     style={{ width: "16px", height: "16px" }}
                   />
+
                   <span>{profile?.coins ?? 0}</span>
                 </div>
               </div>
@@ -197,8 +260,13 @@ export default function Navbar({ darkMode, setDarkMode }) {
 
           {!user && (
             <>
-              <Nav.Link as={Link} to="/login" onClick={playNavTabSound}>Login</Nav.Link>
-              <Nav.Link as={Link} to="/signup" onClick={playNavTabSound}>Sign Up</Nav.Link>
+              <Nav.Link as={Link} to="/login" onClick={playNavTabSound}>
+                Login
+              </Nav.Link>
+
+              <Nav.Link as={Link} to="/signup" onClick={playNavTabSound}>
+                Sign Up
+              </Nav.Link>
             </>
           )}
 
