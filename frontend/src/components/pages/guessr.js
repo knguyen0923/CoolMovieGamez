@@ -1,21 +1,20 @@
-import React from 'react'
-import Card from 'react-bootstrap/Card';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import '../../css/guessr.css';
-import getUserInfo from "../../utilities/decodeJwt"; //used to get profile info for submission to backend
+import React from "react";
+import Card from "react-bootstrap/Card";
+import { MapContainer, TileLayer, Marker, useMapEvents, Polyline, useMap } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import "../../css/guessr.css";
+import getUserInfo from "../../utilities/decodeJwt";
 import useHiloButtonSound from "../../utilities/useHiloButtonSound";
-
-import L from 'leaflet';
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-import { Polyline } from 'react-leaflet';
-import { useMap } from 'react-leaflet';
 import API_BASE from "../../config";
+
+import L from "leaflet";
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
 delete L.Icon.Default.prototype._getIconUrl;
 
-const GUESSR_SUBMIT_SOUND_PATH = '/sounds/506053__mellau__button-click-2.wav';
+const GUESSR_SUBMIT_SOUND_PATH = "/sounds/506053__mellau__button-click-2.wav";
 
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
@@ -33,385 +32,431 @@ const correctIcon = new L.Icon({
   iconSize: [32, 32],
 });
 
-const designMode = false; // Set to true to enable design mode with hardcoded movie and location
+const designMode = false;
 const ROUND_TIME = 30;
 
 const Guessr = () => {
-    const [movie, setMovie] = React.useState("");
-    const [results, setResult] = React.useState(null);
-    const [position, setPosition] = React.useState(null);
-    const [gameStarted, setGameStarted] = React.useState(false);
-    const [loading, setLoading] = React.useState(false);
+  const [movie, setMovie] = React.useState("");
+  const [results, setResult] = React.useState(null);
+  const [position, setPosition] = React.useState(null);
+  const [gameStarted, setGameStarted] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState("");
 
-    const [timeLeft, setTimeLeft] = React.useState(ROUND_TIME);
-    const [totalScore, setTotalScore] = React.useState(0);
-    const [round, setRound] = React.useState(1);
-    const [user, setUser] = React.useState(null);
+  const [timeLeft, setTimeLeft] = React.useState(ROUND_TIME);
+  const [totalScore, setTotalScore] = React.useState(0);
+  const [round, setRound] = React.useState(1);
+  const [user, setUser] = React.useState(null);
 
-    const timerRef = React.useRef(null);
-    const timeLeftRef  = React.useRef(ROUND_TIME);
-    const hasSubmittedRef = React.useRef(false);
-    const roundIdRef = React.useRef(null);
-    const positionRef  = React.useRef(null);
-    const playButtonSound = useHiloButtonSound();
-    const playSubmitSound = useHiloButtonSound({
-      soundPath: GUESSR_SUBMIT_SOUND_PATH,
-      volume: 0.45,
-      errorLabel: 'Guessr submit sound',
-    });
+  const timerRef = React.useRef(null);
+  const timeLeftRef = React.useRef(ROUND_TIME);
+  const hasSubmittedRef = React.useRef(false);
+  const roundIdRef = React.useRef(null);
+  const positionRef = React.useRef(null);
 
-    const username = user?.username || "Guest";
+  const playButtonSound = useHiloButtonSound();
 
-    React.useEffect(() => {
-      const userInfo = getUserInfo();
-      setUser(userInfo);
-    }, []);
+  const playSubmitSound = useHiloButtonSound({
+    soundPath: GUESSR_SUBMIT_SOUND_PATH,
+    volume: 0.45,
+    errorLabel: "Guessr submit sound",
+  });
 
-    React.useEffect(() => {
-      return () => clearInterval(timerRef.current);
-    }, []);
+  const username = user?.username || "Guest";
 
-    React.useEffect(() => {
-      positionRef.current = position;
-    }, [position]);
+  React.useEffect(() => {
+    const userInfo = getUserInfo();
+    setUser(userInfo);
+  }, []);
 
-    const startNewRound = async () => {
+  React.useEffect(() => {
+    return () => clearInterval(timerRef.current);
+  }, []);
+
+  React.useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
+
+  /*
+    CHANGE #1:
+    Backend routes are mounted in server.js like this:
+    app.use("/api/guessr", guessrCreateRoute);
+    app.use("/api/guessr", guessrGetRoute);
+    app.use("/api/guessr", guessrPlay);
+
+    So frontend Guessr URLs must start with:
+    `${API_BASE}/api/guessr/...`
+
+    OLD broken examples:
+    `${API_BASE}/get`
+    `${API_BASE}/guessr/post`
+
+    NEW correct examples:
+    `${API_BASE}/api/guessr/get`
+    `${API_BASE}/api/guessr/post`
+  */
+
+  const startNewRound = async () => {
     playButtonSound();
     await fetchRound();
-    };
+  };
 
-//~~~~~~~~~~~~grabs movie for the round when the page loads
-    React.useEffect(() => {
+  React.useEffect(() => {
     if (!gameStarted) return;
     fetchRound();
-    }, [gameStarted]);
+  }, [gameStarted]);
 
-    const fetchRound = async () => {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-        
-      hasSubmittedRef.current = false;
-        
-        setLoading(true);
-        setResult(null);
-        setPosition(null);
+  const fetchRound = async () => {
+    clearInterval(timerRef.current);
+    timerRef.current = null;
 
-        try {
-            const endpoint = designMode
-            ? `${API_BASE}/test`
-            : `${API_BASE}/get`;
+    hasSubmittedRef.current = false;
 
-            const res = await fetch(endpoint);
-            if (!res.ok) {
-              const text = await res.text();
-              console.error("Server error:", text);
-              throw new Error("Failed request");
-            }
-            const data = await res.json();
-            setMovie(data);
-            roundIdRef.current = data.roundId;
-            startTimer();
+    setLoading(true);
+    setErrorMessage("");
+    setResult(null);
+    setPosition(null);
 
-        } catch (err) {
-            console.error("Failed to load new round:", err);
-        } finally {
-            setLoading(false);
-        }
-    };
+    try {
+      /*
+        CHANGE #2:
+        Fixed new round endpoint.
 
-//~~~~~~~~~~~~disabled map interactions when guess is submitted to lock the map for answer reveal
+        OLD:
+        designMode ? `${API_BASE}/test` : `${API_BASE}/get`
 
-const MapLock = ({ locked }) => {
+        NEW:
+        designMode ? `${API_BASE}/api/guessr/test` : `${API_BASE}/api/guessr/get`
+      */
+      const endpoint = designMode
+        ? `${API_BASE}/api/guessr/test`
+        : `${API_BASE}/api/guessr/get`;
+
+      const res = await fetch(endpoint);
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("Guessr round server error:", text);
+        throw new Error(`Failed to load round: HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      /*
+        CHANGE #3:
+        Added safety check so the page does not silently break
+        if backend returns an error object instead of movie data.
+      */
+      if (!data || (!data.movie && !data.title && !data.poster)) {
+        console.error("Invalid Guessr round data:", data);
+        throw new Error("Invalid Guessr round data");
+      }
+
+      setMovie(data);
+      roundIdRef.current = data.roundId;
+      startTimer();
+    } catch (err) {
+      console.error("Failed to load new round:", err);
+      setErrorMessage("Could not load a Guessr round. Check the backend Guessr route.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const MapLock = ({ locked }) => {
     const map = useMap();
+
     React.useEffect(() => {
-        if (locked) {
-            map.dragging.disable();
-            map.scrollWheelZoom.disable();
-            map.doubleClickZoom.disable();
-            map.boxZoom.disable();
-            map.keyboard.disable();
-            map.touchZoom.disable();
-        } else {
-            map.dragging.enable();
-            map.scrollWheelZoom.enable();
-            map.doubleClickZoom.enable();
-            map.boxZoom.enable();
-            map.keyboard.enable();
-            map.touchZoom.enable();
-        }
+      if (locked) {
+        map.dragging.disable();
+        map.scrollWheelZoom.disable();
+        map.doubleClickZoom.disable();
+        map.boxZoom.disable();
+        map.keyboard.disable();
+        map.touchZoom.disable();
+      } else {
+        map.dragging.enable();
+        map.scrollWheelZoom.enable();
+        map.doubleClickZoom.enable();
+        map.boxZoom.enable();
+        map.keyboard.enable();
+        map.touchZoom.enable();
+      }
     }, [locked, map]);
 
     return null;
-};
+  };
 
-//~~~~~~~~~~~~~~timer for submission~~~~~~~~~~~~~~~~
-const startTimer = () => {
-  clearInterval(timerRef.current);
-
-  timeLeftRef.current = ROUND_TIME;
-  setTimeLeft(ROUND_TIME);
-
-timerRef.current = setInterval(() => {
-  timeLeftRef.current -= 1;
-
-  if (timeLeftRef.current <= 0) {
+  const startTimer = () => {
     clearInterval(timerRef.current);
-    timerRef.current = null;
-    console.log("AUTO SUBMIT FIRED");
-    setTimeLeft(0);
-    handleSubmission(true);
-    return;
-  }
 
-  setTimeLeft(timeLeftRef.current);
-}, 1000);
-};
+    timeLeftRef.current = ROUND_TIME;
+    setTimeLeft(ROUND_TIME);
 
+    timerRef.current = setInterval(() => {
+      timeLeftRef.current -= 1;
 
+      if (timeLeftRef.current <= 0) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+        setTimeLeft(0);
+        handleSubmission(true);
+        return;
+      }
 
-//~~~~~~~~~~~~~~~autozooms to map bounds after guess is submitted
-const FitBounds = ({ position, results }) => {
-  const map = useMap();
+      setTimeLeft(timeLeftRef.current);
+    }, 1000);
+  };
 
-  React.useEffect(() => {
-    if (position && results) {
-      const bounds = [
-        [position.lat, position.lng],
-        [
-          results.answer.lat,
-          results.answer.lng
-        ]
-      ];
-      map.fitBounds(bounds, { padding: [50, 50] });
-    }
-  }, [position, results, map]);
+  const FitBounds = ({ position, results }) => {
+    const map = useMap();
 
-  return null;
-};
+    React.useEffect(() => {
+      if (position && results?.answer?.lat && results?.answer?.lng) {
+        const bounds = [
+          [position.lat, position.lng],
+          [results.answer.lat, results.answer.lng],
+        ];
 
-//~~~~~~~~~~~~~handles map click events to get user's guess for location
-const ClickHandler = () => {
+        map.fitBounds(bounds, { padding: [50, 50] });
+      }
+    }, [position, results, map]);
+
+    return null;
+  };
+
+  const ClickHandler = () => {
     useMapEvents({
-        click(e) {
-        if (results) return; // Disable clicking after guess is submitted
+      click(e) {
+        if (results) return;
+
         setPosition({
           lat: e.latlng.lat,
-          lng: e.latlng.lng
-        });        
-          console.log("Map clicked at:", e.latlng, "Lat:", e.latlng.lat, "Lng:", e.latlng.lng);
-        },
+          lng: e.latlng.lng,
+        });
+      },
     });
+
     return null;
-};
+  };
 
-//~~~~~~~~~~~~~~~~~~submits user guess to backend
-const handleSubmission = async (isAuto = false) => {
-  if (hasSubmittedRef.current) return;
-  hasSubmittedRef.current = true;
+  const handleSubmission = async (isAuto = false) => {
+    if (hasSubmittedRef.current) return;
 
-  clearInterval(timerRef.current);
-  timerRef.current = null;
+    hasSubmittedRef.current = true;
 
-  const currentPosition = positionRef.current;
-  const lat = isAuto ? null : currentPosition?.lat;
-  const lng = isAuto ? null : currentPosition?.lng;
-  
+    clearInterval(timerRef.current);
+    timerRef.current = null;
 
-  console.log("Check 1", { position, "Timer": timeLeft });
-  console.log("SENDING:", { lat, lng, isAuto });
-    const res = await fetch(`${API_BASE}/guessr/post`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+    const currentPosition = positionRef.current;
+    const lat = isAuto ? null : currentPosition?.lat;
+    const lng = isAuto ? null : currentPosition?.lng;
+
+    try {
+      /*
+        CHANGE #4:
+        Fixed submit endpoint.
+
+        OLD:
+        `${API_BASE}/guessr/post`
+
+        NEW:
+        `${API_BASE}/api/guessr/post`
+      */
+      const res = await fetch(`${API_BASE}/api/guessr/post`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-        
-        username: username,
-        lat,
-        lng,
-        timer: timeLeftRef.current,
-        roundId: roundIdRef.current,
-        timedOut: isAuto,
-        })
-    });
-    const truedata = await res.json();
-    setResult(truedata);
+          username,
+          lat,
+          lng,
+          timer: timeLeftRef.current,
+          roundId: roundIdRef.current,
+          timedOut: isAuto,
+        }),
+      });
 
-    console.log("Check 3: Received response from server", truedata);
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("Guessr submit server error:", text);
+        throw new Error(`Guessr submit failed: HTTP ${res.status}`);
+      }
 
-    setTotalScore(prev => prev + truedata.score);
-    setRound(prev => prev + 1);
-    window.dispatchEvent(new Event("coinsUpdated"));
+      const trueData = await res.json();
 
-    console.log("Submitted guess:", position);
-    console.log(truedata);
-};
+      setResult(trueData);
+      setTotalScore((prev) => prev + (Number(trueData.score) || 0));
+      setRound((prev) => prev + 1);
 
-//~~~~~~~~~~~~~~~~~~~~~~displays page~~~~~~~~~~~~~~~~~~~~~~~
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      window.dispatchEvent(new Event("coinsUpdated"));
+    } catch (err) {
+      console.error("Failed to submit Guessr guess:", err);
+      setErrorMessage("Could not submit your guess. Check the backend Guessr submit route.");
+      hasSubmittedRef.current = false;
+    }
+  };
 
-if (!gameStarted) {
-  return (
-    <div className="text-center mt-5">
-      <h1> Movie Guessr</h1>
-      <p>Guess where the movie takes place!</p>
-      <button
-        className="btn btn-primary"
-        onClick={() => {
-          playButtonSound();
-          setGameStarted(true);
-        }}
-      >
-        Start Game
-        {loading && <p>Loading new round...</p>}
-      </button>
-    </div>
-  );
-}
+  if (!gameStarted) {
     return (
-    <div className="guessr">
+      <div className="text-center mt-5">
+        <h1>Movie Guessr</h1>
+        <p>Guess where the movie takes place!</p>
 
-      <h1 className="mx-2">Guessr</h1>
-
-    {/* Two-column layout: Map on left, Poster on right */}
-    <div className="d-flex align-items-stretch">
-
-    {/* Left: Map */}
-    <MapContainer
-    center={[20, 0]}
-    zoom={2}
-    style={{ height: "600px", width: "100%" }}
-    minZoom={2}
-    >
-  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-
-  <ClickHandler />
-  <MapLock locked={!!results} />
-  <FitBounds position={position} results={results} />
-
-  {/* User marker */}
-  {position && (
-    <Marker position={position} icon={userIcon} />
-  )}
-
-  {/* Correct marker + line */}
-  {results?.answer && (
-    <>
-      <Marker
-        position={[
-          results.answer.lat, 
-          results.answer.lng
-        ]}
-        icon={correctIcon}
-      />
-    {results?.answer && position && (
-      <Polyline
-        positions={[
-          [position.lat, position.lng],
-          [
-            results.answer.lat,
-            results.answer.lng
-          ]
-        ]}
-      />
-    )}
-    </>
-  )}
-</MapContainer>
-
-
-    {/* Right: Poster */}
-    <div style={{ width: "400px", height: "600px" }}>
-
-  {!results ? ( //~~~~~~~~~~~~~~~~~~~~~~ Before Submit ~~~~~~~~~~~~~~~~~~~
-    movie && movie.poster && (
-    <Card style={{ height: "100%" }}>
-        <Card.Body className="text-center">
-            <Card.Title>{movie.movie}</Card.Title>
-            <h5 style={{ color: timeLeft < 6 ? "red" : "grey" }}>
-              Time Left: {timeLeft}s
-            </h5>
-        </Card.Body>
-
-    <div style= {{flex: 1}}>
-        <Card.Img
-            src={movie.poster}
-            style={{
-            width: "100%",
-            height: "90%",
-            objectFit: "cover"
-            }}
-    />
-  </div>
-</Card>
-    )
-  ) : (
-    // ~~~~~~~~~~~~~~~~~~~~ AFTER SUBMIT ~~~~~~~~~~~~~~~~~~
-    <Card>
-      <Card.Body className="text-center">
-        <Card.Title>Results</Card.Title>
-        {results.timedOut && (
-          <p style={{ color: "red", fontWeight: "bold" }}>
-            TIME'S UP!
-          </p>
+        {errorMessage && (
+          <p style={{ color: "red", fontWeight: "bold" }}>{errorMessage}</p>
         )}
 
-        <p>
-          <strong>Answer:</strong> {results.answer?.city || "Unknown"}
-        </p>
+        <button
+          className="btn btn-primary"
+          onClick={() => {
+            playButtonSound();
+            setGameStarted(true);
+          }}
+          disabled={loading}
+        >
+          {loading ? "Loading..." : "Start Game"}
+        </button>
+      </div>
+    );
+  }
 
-        <p>
-          <strong>Your Guess:</strong> {results.userGuess
-  ? `${results.userGuess.lat.toFixed(2)}, ${results.userGuess.lng.toFixed(2)}`
-  : "No guess"}
-        </p>
-        <p>
-          <strong>Score:</strong> {results.score || 0}
-        </p>
-        <p>
-            <strong>Coins Earned:</strong> {results.coins || 0}
-        </p>
-        <p> 
-            Distance: {results.distance ?? "Unknown"} km
-        </p>        
-        <p> 
-            TIMER BONUS: {results.timerbonus}
-        </p>
-        <p> 
-            Total Score: {totalScore} | Round: {round}
-        </p>
+  return (
+    <div className="guessr">
+      <h1 className="mx-2">Guessr</h1>
 
+      {errorMessage && (
+        <p style={{ color: "red", fontWeight: "bold", marginLeft: "8px" }}>
+          {errorMessage}
+        </p>
+      )}
 
-      </Card.Body>
-    </Card>
-  )}
+      <div className="d-flex align-items-stretch">
+        <MapContainer
+          center={[20, 0]}
+          zoom={2}
+          style={{ height: "600px", width: "100%" }}
+          minZoom={2}
+        >
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-</div>
+          <ClickHandler />
+          <MapLock locked={!!results} />
+          <FitBounds position={position} results={results} />
 
-  </div>
+          {position && <Marker position={position} icon={userIcon} />}
 
-      {/* 🎯 Submit Button */}
-<div className="text-center mt-3">
-  {!results ? (
-    <button
-      onClick={() => {
-        playSubmitSound();
-        handleSubmission(false);
-      }}
-      className="btn btn-primary"
-      disabled={!position || results}
-    >
-      Submit Guess
-    </button>
-  ) : (
-    <button
-      onClick={startNewRound}
-      className="btn btn-success"
-    >
-      Next Round
-    </button>
-  )}
-</div>
+          {results?.answer && (
+            <>
+              <Marker
+                position={[results.answer.lat, results.answer.lng]}
+                icon={correctIcon}
+              />
+
+              {position && (
+                <Polyline
+                  positions={[
+                    [position.lat, position.lng],
+                    [results.answer.lat, results.answer.lng],
+                  ]}
+                />
+              )}
+            </>
+          )}
+        </MapContainer>
+
+        <div style={{ width: "400px", height: "600px" }}>
+          {!results ? (
+            movie &&
+            movie.poster && (
+              <Card style={{ height: "100%" }}>
+                <Card.Body className="text-center">
+                  {/* CHANGE #5:
+                      Supports both data.movie and data.title just in case
+                      backend returns either field name.
+                  */}
+                  <Card.Title>{movie.movie || movie.title}</Card.Title>
+
+                  <h5 style={{ color: timeLeft < 6 ? "red" : "grey" }}>
+                    Time Left: {timeLeft}s
+                  </h5>
+
+                  {loading && <p>Loading new round...</p>}
+                </Card.Body>
+
+                <div style={{ flex: 1 }}>
+                  <Card.Img
+                    src={movie.poster}
+                    alt={movie.movie || movie.title || "Movie poster"}
+                    style={{
+                      width: "100%",
+                      height: "90%",
+                      objectFit: "cover",
+                    }}
+                  />
+                </div>
+              </Card>
+            )
+          ) : (
+            <Card>
+              <Card.Body className="text-center">
+                <Card.Title>Results</Card.Title>
+
+                {results.timedOut && (
+                  <p style={{ color: "red", fontWeight: "bold" }}>TIME'S UP!</p>
+                )}
+
+                <p>
+                  <strong>Answer:</strong> {results.answer?.city || "Unknown"}
+                </p>
+
+                <p>
+                  <strong>Your Guess:</strong>{" "}
+                  {results.userGuess
+                    ? `${results.userGuess.lat.toFixed(2)}, ${results.userGuess.lng.toFixed(2)}`
+                    : "No guess"}
+                </p>
+
+                <p>
+                  <strong>Score:</strong> {results.score || 0}
+                </p>
+
+                <p>
+                  <strong>Coins Earned:</strong> {results.coins || 0}
+                </p>
+
+                <p>Distance: {results.distance ?? "Unknown"} km</p>
+
+                <p>TIMER BONUS: {results.timerbonus}</p>
+
+                <p>
+                  Total Score: {totalScore} | Round: {round}
+                </p>
+              </Card.Body>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      <div className="text-center mt-3">
+        {!results ? (
+          <button
+            onClick={() => {
+              playSubmitSound();
+              handleSubmission(false);
+            }}
+            className="btn btn-primary"
+            disabled={!position || !!results || loading}
+          >
+            Submit Guess
+          </button>
+        ) : (
+          <button onClick={startNewRound} className="btn btn-success">
+            Next Round
+          </button>
+        )}
+      </div>
     </div>
   );
-}
+};
 
 export default Guessr;
