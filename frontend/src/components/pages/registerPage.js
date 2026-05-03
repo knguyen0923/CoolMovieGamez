@@ -7,7 +7,27 @@ import API_BASE from "../../config";
 
 const PRIMARY_COLOR = "#cc5c99";
 const SECONDARY_COLOR = "#0c0c1f";
-const url = `${API_BASE}/users/signup`;
+
+/*
+  CHANGE:
+  Fixed old signup API path.
+
+  OLD:
+  `${API_BASE}/users/signup`
+
+  NEW:
+  `${API_BASE}/api/users/signup`
+
+  Your backend server.js mounts user routes like:
+  app.use("/api/users", registerRoute);
+
+  Your signup route file uses:
+  router.post("/signup", ...)
+
+  So the full correct endpoint is:
+  /api/users/signup
+*/
+const url = `${API_BASE}/api/users/signup`;
 
 const Register = () => {
   const [data, setData] = useState({
@@ -116,6 +136,7 @@ const Register = () => {
 
     try {
       await axios.post(url, data);
+
       window.alert("Registration successful! Please log in.");
       navigate("/login");
     } catch (error) {
@@ -146,6 +167,7 @@ const Register = () => {
                 <Form onSubmit={handleSubmit}>
                   <Form.Group className="mb-3">
                     <Form.Label style={labelStyling}>First Name</Form.Label>
+
                     <Form.Control
                       type="text"
                       name="firstName"
@@ -157,6 +179,7 @@ const Register = () => {
                       required
                       style={inputStyle}
                     />
+
                     {focusedField === "firstName" && (
                       <div style={helperBoxStyle}>First name is required.</div>
                     )}
@@ -164,6 +187,7 @@ const Register = () => {
 
                   <Form.Group className="mb-3">
                     <Form.Label style={labelStyling}>Last Name</Form.Label>
+
                     <Form.Control
                       type="text"
                       name="lastName"
@@ -175,6 +199,7 @@ const Register = () => {
                       required
                       style={inputStyle}
                     />
+
                     {focusedField === "lastName" && (
                       <div style={helperBoxStyle}>Last name is required.</div>
                     )}
@@ -182,6 +207,7 @@ const Register = () => {
 
                   <Form.Group className="mb-3">
                     <Form.Label style={labelStyling}>Username</Form.Label>
+
                     <Form.Control
                       type="text"
                       name="username"
@@ -193,6 +219,7 @@ const Register = () => {
                       required
                       style={inputStyle}
                     />
+
                     {focusedField === "username" && (
                       <div style={helperBoxStyle}>
                         <div>
@@ -208,6 +235,7 @@ const Register = () => {
 
                   <Form.Group className="mb-3">
                     <Form.Label style={labelStyling}>Email</Form.Label>
+
                     <Form.Control
                       type="email"
                       name="email"
@@ -219,6 +247,7 @@ const Register = () => {
                       required
                       style={inputStyle}
                     />
+
                     {focusedField === "email" && (
                       <div style={helperBoxStyle}>
                         <div>Enter a valid email address like: name@example.com</div>
@@ -244,6 +273,7 @@ const Register = () => {
 
                   <Form.Group className="mb-3">
                     <Form.Label style={labelStyling}>Password</Form.Label>
+
                     <Form.Control
                       type="password"
                       name="password"
@@ -255,6 +285,7 @@ const Register = () => {
                       required
                       style={inputStyle}
                     />
+
                     {focusedField === "password" && (
                       <div style={helperBoxStyle}>
                         <div>
@@ -272,7 +303,8 @@ const Register = () => {
                       Already have an account?
                       <span>
                         <Link to="/login" style={labelStyling}>
-                          {" "}Log in
+                          {" "}
+                          Log in
                         </Link>
                       </span>
                     </Form.Text>
