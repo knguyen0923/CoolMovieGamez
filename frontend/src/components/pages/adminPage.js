@@ -4,7 +4,6 @@ import getUserInfo from "../../utilities/decodeJwt";
 import API_BASE from "../../config";
 
 import {
-  BarChart,
   Bar,
   Line,
   XAxis,
@@ -12,21 +11,21 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  ComposedChart,
 } from "recharts";
 
 function AdminPage() {
   const [users, setUsers] = useState([]);
   const [hiloData, setHiloData] = useState([]);
   const [guessrData, setGuessrData] = useState([]);
-
   const [bellCurveData, setBellCurveData] = useState([]);
 
   const [game, setGame] = useState("hilo");
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState("dashboard");
-  
 
   let user = null;
+
   try {
     user = getUserInfo();
   } catch {
@@ -35,29 +34,53 @@ function AdminPage() {
 
   const token = localStorage.getItem("accessToken");
 
-  // grab users on mount
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  // fetch users and leaderboards on mount and when game changes
+  useEffect(() => {
+    fetchBellCurve();
+    fetchAllLeaderboards();
+  }, [game]);
+
+  // CHANGE #1:
+  // Fixed old API route.
+  // OLD: `${API_BASE}/users`
+  // NEW: `${API_BASE}/api/users`
   const fetchUsers = async () => {
     try {
-      const res = await fetch(`${API_BASE}/users`);
+      const res = await fetch(`${API_BASE}/api/users`);
+
+      if (!res.ok) {
+        throw new Error(`Users fetch failed: HTTP ${res.status}`);
+      }
+
       const data = await res.json();
       setUsers(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error(err);
+      console.error("Admin users fetch error:", err);
       setUsers([]);
     }
   };
 
+  // CHANGE #2:
+  // Fixed leaderboard API routes.
+  // OLD: `${API_BASE}/leaderboard/hilo`
+  // NEW: `${API_BASE}/api/leaderboard/hilo`
   const fetchAllLeaderboards = async () => {
     try {
       const [hiloRes, guessrRes] = await Promise.all([
-        fetch(`${API_BASE}/leaderboard/hilo`),
-        fetch(`${API_BASE}/leaderboard/guessr`),
+        fetch(`${API_BASE}/api/leaderboard/hilo`),
+        fetch(`${API_BASE}/api/leaderboard/guessr`),
       ]);
+
+      if (!hiloRes.ok) {
+        throw new Error(`Hilo leaderboard failed: HTTP ${hiloRes.status}`);
+      }
+
+      if (!guessrRes.ok) {
+        throw new Error(`Guessr leaderboard failed: HTTP ${guessrRes.status}`);
+      }
 
       const hilo = await hiloRes.json();
       const guessr = await guessrRes.json();
@@ -65,76 +88,111 @@ function AdminPage() {
       setHiloData(Array.isArray(hilo) ? hilo : []);
       setGuessrData(Array.isArray(guessr) ? guessr : []);
     } catch (err) {
-      console.error(err);
+      console.error("Admin leaderboard fetch error:", err);
       setHiloData([]);
       setGuessrData([]);
     }
   };
 
-  // build bell curve data based on scores
+  // CHANGE #3:
+  // Safer score binning for the bell curve.
   const buildBellCurveData = (scores) => {
-    if (!scores.length) return [];
+    const cleanScores = scores
+      .map((score) => Number(score))
+      .filter((score) => Number.isFinite(score) && score >= 0);
 
-    const maxScore = Math.max(...scores);
-    const binSize = maxScore ? Math.ceil(maxScore / 10) : 10;
+    if (cleanScores.length === 0) return [];
+
+    const maxScore = Math.max(...cleanScores);
+    const binSize = maxScore > 0 ? Math.ceil(maxScore / 10) : 10;
 
     const bins = {};
 
-    scores.forEach((score) => {
-      const bin = Math.floor(score / binSize) * binSize;
-      bins[bin] = (bins[bin] || 0) + 1;
+    cleanScores.forEach((score) => {
+      const binStart = Math.floor(score / binSize) * binSize;
+      bins[binStart] = (bins[binStart] || 0) + 1;
     });
 
     return Object.keys(bins)
-      .map((bin) => ({
-        range: `${bin}-${Number(bin) + binSize}`,
-        count: bins[bin],
-      }))
-      .sort((a, b) => parseInt(a.range) - parseInt(b.range));
+      .map((bin) => {
+        const start = Number(bin);
+        const end = start + binSize;
+
+        return {
+          range: `${start}-${end}`,
+          binStart: start,
+          midpoint: (start + end) / 2,
+          count: bins[bin],
+        };
+      })
+      .sort((a, b) => a.binStart - b.binStart);
   };
 
-  // build gaussian curve data based on scores and bins
+  // CHANGE #4:
+  // Actually creates the gaussian line values.
+  // Your old code defined this function but did not apply it.
   const buildGaussianCurve = (scores, bins) => {
-    if (!scores.length || !bins.length) return [];
+    const cleanScores = scores
+      .map((score) => Number(score))
+      .filter((score) => Number.isFinite(score) && score >= 0);
 
-    const mean = scores.reduce((sum, val) => sum + val, 0) / scores.length;
+    if (cleanScores.length === 0 || bins.length === 0) return [];
+
+    const mean =
+      cleanScores.reduce((sum, val) => sum + val, 0) / cleanScores.length;
 
     const variance =
-      scores.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) /
-      scores.length;
+      cleanScores.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) /
+      cleanScores.length;
 
     const stdDev = Math.sqrt(variance);
 
-    if (stdDev === 0) return bins; // prevent divide by zero
-
-    return bins.map((bin) => {
-      const [min, max] = bin.range.split("-").map(Number);
-      const midpoint = (min + max) / 2;
-
-      const exponent =
-        -Math.pow(midpoint - mean, 2) / (2 * Math.pow(stdDev, 2));
-
-      const gaussian =
-        (1 / (stdDev * Math.sqrt(2 * Math.PI))) * Math.exp(exponent);
-
-      return {
+    if (!Number.isFinite(stdDev) || stdDev === 0) {
+      return bins.map((bin) => ({
         ...bin,
-        gaussian: gaussian * scores.length * 10, // scale line to bars
-      };
+        gaussian: bin.count,
+      }));
+    }
+
+    const maxCount = Math.max(...bins.map((bin) => bin.count));
+
+    const gaussianValues = bins.map((bin) => {
+      const exponent =
+        -Math.pow(bin.midpoint - mean, 2) / (2 * Math.pow(stdDev, 2));
+
+      return Math.exp(exponent);
     });
+
+    const maxGaussian = Math.max(...gaussianValues);
+
+    return bins.map((bin, index) => ({
+      ...bin,
+      gaussian:
+        maxGaussian > 0
+          ? Number(((gaussianValues[index] / maxGaussian) * maxCount).toFixed(2))
+          : 0,
+    }));
   };
 
-  // fetch bell curve data
+  // CHANGE #5:
+  // Fixed bell curve fetch route and applies gaussian data.
   const fetchBellCurve = async () => {
     try {
-      const res = await fetch(`${API_BASE}/leaderboard/${game}`);
+      const res = await fetch(`${API_BASE}/api/leaderboard/${game}`);
+
+      if (!res.ok) {
+        throw new Error(`Bell curve fetch failed: HTTP ${res.status}`);
+      }
+
       const data = await res.json();
 
-      const scores = (Array.isArray(data) ? data : []).map(
-        (i) => Number(i.score) || 0,
-      );
+      const scores = (Array.isArray(data) ? data : [])
+        .map((i) => Number(i.score))
+        .filter((score) => Number.isFinite(score) && score >= 0);
 
-      const curve = buildBellCurveData(scores);
+      const bins = buildBellCurveData(scores);
+      const curve = buildGaussianCurve(scores, bins);
+
       setBellCurveData(curve);
     } catch (err) {
       console.error("Bell curve error:", err);
@@ -142,62 +200,69 @@ function AdminPage() {
     }
   };
 
-  //update data when game
-  useEffect(() => {
-    fetchBellCurve();
-    fetchAllLeaderboards();
-  }, [game]);
-
-  // Admin actions
+  // CHANGE #6:
+  // Fixed update user route.
+  // OLD: `${API_BASE}/users/${u._id}`
+  // NEW: `${API_BASE}/api/users/${u._id}`
   const toggleRole = async (u) => {
     const newRole = u.role === "admin" ? "user" : "admin";
 
-    await fetch(`${API_BASE}/users/${u._id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ role: newRole }),
-    });
+    try {
+      const res = await fetch(`${API_BASE}/api/users/${u._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ role: newRole }),
+      });
 
-    fetchUsers();
+      if (!res.ok) {
+        throw new Error(`Toggle role failed: HTTP ${res.status}`);
+      }
+
+      fetchUsers();
+    } catch (err) {
+      console.error("Toggle role error:", err);
+    }
   };
 
-  // delete user and update all data to reflect change
+  // CHANGE #7:
+  // Fixed delete user route.
+  // OLD: `${API_BASE}/users/${id}`
+  // NEW: `${API_BASE}/api/users/${id}`
   const deleteUser = async (id) => {
-    //confirm deletion
     if (!window.confirm("Are you sure you want to delete this user?")) return;
+
     try {
-      const res = await fetch(`${API_BASE}/users/${id}`, {
+      const res = await fetch(`${API_BASE}/api/users/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      await res.json();
+      if (!res.ok) {
+        throw new Error(`Delete user failed: HTTP ${res.status}`);
+      }
 
-      // refresh all data after deletion
       fetchUsers();
       fetchBellCurve();
       fetchAllLeaderboards();
     } catch (err) {
-      console.error(err);
+      console.error("Delete user error:", err);
     }
   };
 
-  // filter users based on search
   const filteredUsers = users.filter((u) =>
-    u.username?.toLowerCase().includes(search.toLowerCase()),
+    u.username?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Stat for card display - calculates average score for given data
   const getAvg = (data) =>
     data.length > 0
       ? Math.round(
           data.reduce((sum, i) => sum + (Number(i.score) || 0), 0) /
-            data.length,
+            data.length
         )
       : 0;
 
@@ -214,6 +279,7 @@ function AdminPage() {
       {/* Sidebar */}
       <div className="sidebar">
         <h2>Admin</h2>
+
         <ul>
           <li onClick={() => setTab("dashboard")}>Dashboard</li>
           <li onClick={() => setTab("users")}>Users</li>
@@ -227,10 +293,11 @@ function AdminPage() {
             {tab === "dashboard" && "Dashboard"}
             {tab === "users" && "User Management"}
           </h1>
+
           <p style={{ opacity: 0.6 }}>Manage your platform data</p>
         </div>
 
-        {/* DASHBOARD */}
+        {/* Dashboard */}
         {tab === "dashboard" && (
           <>
             <div className="stats-grid">
@@ -241,17 +308,17 @@ function AdminPage() {
 
               <div className="stat-card">
                 <h4>Hilo Avg</h4>
-                <p>{getAvg(hiloData)}</p>
+                <p>{hiloAvg}</p>
               </div>
 
               <div className="stat-card">
                 <h4>Guessr Avg</h4>
-                <p>{getAvg(guessrData)}</p>
+                <p>{guessrAvg}</p>
               </div>
             </div>
 
             <div className="card">
-              <h3>Score Distribution (Bell Curve) - {game}</h3>
+              <h3>Score Distribution / Bell Curve - {game}</h3>
 
               <select value={game} onChange={(e) => setGame(e.target.value)}>
                 <option value="hilo">Hilo</option>
@@ -262,20 +329,27 @@ function AdminPage() {
                 <p>No score data available</p>
               ) : (
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={bellCurveData}>
+                  {/* CHANGE #8:
+                      Use ComposedChart instead of BarChart.
+                      ComposedChart supports Bar + Line together cleanly.
+                  */}
+                  <ComposedChart data={bellCurveData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="range" />
-                    <YAxis />
+                    <YAxis allowDecimals={false} />
                     <Tooltip />
-                    <Bar dataKey="count" />
+
+                    <Bar dataKey="count" name="Players" />
+
                     <Line
                       type="monotone"
                       dataKey="gaussian"
+                      name="Bell Curve"
                       stroke="#ef4444"
                       strokeWidth={3}
                       dot={false}
                     />
-                  </BarChart>
+                  </ComposedChart>
                 </ResponsiveContainer>
               )}
             </div>
