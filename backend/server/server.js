@@ -52,18 +52,25 @@ const SERVER_PORT = process.env.PORT || 8081;
 // Connect DB
 dbConnection();
 
-// ✅ CORS (correct)
 app.use(cors({
-  origin: [
-    "https://cool-movie-gamez.vercel.app",
-    /https:\/\/cool-movie-gamez.*\.vercel\.app/
-  ],
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    // allow all vercel preview deployments
+    if (
+      origin.includes("vercel.app") ||
+      origin.includes("localhost")
+    ) {
+      return callback(null, true);
+    }
+
+    return callback(new Error("Not allowed by CORS"));
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }));
 
-// ✅ HANDLE PREFLIGHT (IMPORTANT)
 app.options("*", (req, res) => {
   res.sendStatus(200);
 });
